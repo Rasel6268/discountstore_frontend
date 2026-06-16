@@ -14,6 +14,7 @@ import {
   FaTags,
 } from "react-icons/fa";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaBangladeshiTakaSign } from "react-icons/fa6";
 import Image from "next/image";
 import BannerSlider from "../BannerSwiper";
@@ -21,10 +22,12 @@ import { useAuth } from "@/AuthProvider/AuthProvider";
 import { useCart } from "@/hooks/useCart";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/config/api";
+import toast from "react-hot-toast";
 
 const Home = () => {
+  const router = useRouter();
   const { user, loading } = useAuth();
-  const { items } = useCart();
+  const { items, addToCart } = useCart();
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -33,114 +36,60 @@ const Home = () => {
       return res.data.data;
     },
   });
-  console.log("Fetched products:", products);
+
   const bestProducts = products?.filter((item) => item.isBest === true);
   const discountedProducts = products?.filter(
     (item) => item.discountPercentage > 15,
   );
   const premiumProducts = products?.filter((item) => item.isPremium === true);
 
-  // Countdown Timer Component - Updates every second
-  const CountdownTimer = ({ endDate }) => {
-    const [timeLeft, setTimeLeft] = useState(null);
-    const [isExpired, setIsExpired] = useState(false);
+  const handleAddToCart = async (product) => {
+    try {
+      if (product.trackInventory && product.quantity === 0) {
+        toast.error(`${product.name} is out of stock!`);
+        return;
+      }
 
-    useEffect(() => {
-      const calculateTimeLeft = () => {
-        const difference = new Date(endDate) - new Date();
+      const result = await addToCart({
+        productId: product._id,
+        name: product.name,
+        price: product.discountPrice || product.regularPrice,
+        quantity: 1,
+        image: product.images?.[0]?.url,
+      });
 
-        if (difference <= 0) {
-          setIsExpired(true);
-          return null;
-        }
-
-        setIsExpired(false);
-
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((difference / 1000 / 60) % 60);
-        const seconds = Math.floor((difference / 1000) % 60);
-
-        return {
-          days,
-          hours: hours.toString().padStart(2, "0"),
-          minutes: minutes.toString().padStart(2, "0"),
-          seconds: seconds.toString().padStart(2, "0"),
-          total: difference,
-        };
-      };
-
-      const updateTimer = () => {
-        const newTimeLeft = calculateTimeLeft();
-        setTimeLeft(newTimeLeft);
-      };
-
-      updateTimer();
-      // Update every second for real-time countdown
-      const timer = setInterval(updateTimer, 1000);
-
-      return () => clearInterval(timer);
-    }, [endDate]);
-
-    if (isExpired) {
-      return <span className="text-red-300 text-[10px]">Offer expired!</span>;
+      if (result.success) {
+        toast.success(`${product.name} added to cart!`);
+      } else {
+        toast.error(result.message || "Failed to add to cart");
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      toast.error("Failed to add to cart");
     }
-
-    if (!timeLeft) return null;
-
-    // Different display for different time ranges
-    if (timeLeft.days > 0) {
-      return (
-        <span className="text-white text-[10px] flex items-center gap-1">
-          <FaClock className="text-amber-300" />
-          {timeLeft.days}d {timeLeft.hours}:{timeLeft.minutes}:
-          {timeLeft.seconds}
-        </span>
-      );
-    }
-
-    if (timeLeft.hours > 0 && timeLeft.hours < 24) {
-      return (
-        <span className="text-white text-[10px] flex items-center gap-1">
-          <FaClock className="text-amber-300" />
-          <span className="font-mono">
-            {timeLeft.hours}:{timeLeft.minutes}:{timeLeft.seconds}
-          </span>
-        </span>
-      );
-    }
-
-    // Less than 1 hour - show with emphasis
-    return (
-      <span className="text-red-300 text-[10px] flex items-center gap-1 animate-pulse">
-        <FaClock className="text-red-300" />
-        <span className="font-mono font-bold">
-          {timeLeft.minutes}:{timeLeft.seconds}
-        </span>
-      </span>
-    );
   };
 
-  // Helper function for offer tags
-  const getOfferTag = (product) => {
-    const daysUntilEnd = Math.ceil(
-      (new Date(product.discountEndDate) - new Date()) / (1000 * 60 * 60 * 24),
-    );
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await api.get("/categories");
+      return res.data;
+    },
+  });
 
-    if (daysUntilEnd <= 3) return "FLASH SALE";
-    if (product.discountPercentage >= 30) return "MEGA OFFER";
-    if (product.discountPercentage >= 20) return "HOT DEAL";
-    return "LIMITED";
-  };
-
-  // Cart and Wishlist handlers
-  const addToCart = (product) => {
-    // Your add to cart logic here
-    console.log("Added to cart:", product);
+  const handleCategoryClick = (categoryId, categoryName) => {
+    if (categoryId && categoryName) {
+      router.push(
+        `/shop?category=${categoryId}&categoryName=${encodeURIComponent(
+          categoryName
+        )}`
+      );
+    } else {
+      router.push(`/shop?category=${categoryId || ""}`);
+    }
   };
 
   const toggleWishlist = (productId) => {
-    // Your wishlist logic here
     console.log("Toggle wishlist:", productId);
   };
 
@@ -148,7 +97,6 @@ const Home = () => {
     <section>
       {/* Premium Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 to-transparent z-10"></div>
         <div className="w-11/12 mx-auto py-8 md:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
             {/* Categories Sidebar - Premium Leather Edition */}
@@ -161,15 +109,7 @@ const Home = () => {
                 </h2>
 
                 <ul className="space-y-3">
-                  {[
-                    { name: "Premium Leather Bags", count: 24, active: true },
-                    { name: "Fusion Handbags", count: 18, active: false },
-                    { name: "Men's Wallets", count: 12, active: false },
-                    { name: "Women's Belts", count: 8, active: false },
-                    { name: "Leather Jackets", count: 15, active: false },
-                    { name: "Shoe Collection", count: 20, active: false },
-                    { name: "Accessories", count: 30, active: false },
-                  ].map((category, index) => (
+                  {categories?.map((category, index) => (
                     <li
                       key={index}
                       className={`flex justify-between items-center rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer ${
@@ -177,6 +117,14 @@ const Home = () => {
                           ? "bg-linear-to-r from-amber-500 to-amber-600 text-white shadow-lg"
                           : "bg-amber-800/50 text-amber-100 shadow-md hover:bg-amber-700/70 hover:shadow-lg"
                       }`}
+                      onClick={() => {
+                        if (category._id) {
+                          handleCategoryClick(category._id, category.name);
+                        } else {
+                          console.warn("Category missing _id:", category);
+                          router.push("/shop");
+                        }
+                      }}
                     >
                       <span className="font-medium">{category.name}</span>
                       <span
@@ -186,7 +134,7 @@ const Home = () => {
                             : "bg-amber-600 text-amber-100"
                         }`}
                       >
-                        {category.count}
+                        {category.productCount}
                       </span>
                     </li>
                   ))}
@@ -198,9 +146,12 @@ const Home = () => {
                   <p className="text-sm mt-1 text-amber-100">
                     Up to 40% off on premium leather
                   </p>
-                  <button className="mt-3 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-white transition-colors">
-                    Shop Now
-                  </button>
+                  <Link
+                    href="/shop"
+                    className="mt-3 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold hover:bg-white hover:text-amber-900 transition-all duration-200 inline-block cursor-pointer"
+                  >
+                    Shop Now →
+                  </Link>
                 </div>
               </div>
             </div>
@@ -263,7 +214,8 @@ const Home = () => {
                       Eid-ul-Fitr Mega Sale
                     </h2>
                     <p className="text-amber-100 mb-4">
-                      Get up to 50% off on fusion leather collection + Free Gift
+                      Get up to 50% off on fusion leather collection + Free
+                      Gift
                     </p>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="text-center">
@@ -285,7 +237,7 @@ const Home = () => {
                         </div>
                       </div>
                     </div>
-                    <button className="bg-white text-amber-700 px-6 py-2 rounded-full font-semibold hover:bg-amber-100 transition">
+                    <button className="bg-white text-amber-700 px-6 py-2 rounded-full font-semibold hover:bg-amber-100 transition cursor-pointer">
                       Claim Offer →
                     </button>
                   </div>
@@ -378,9 +330,11 @@ const Home = () => {
                   </div>
 
                   <button
-                    onClick={() => addToCart(product)}
-                    disabled={product.trackInventory && product.quantity === 0}
-                    className={`mt-auto w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                    onClick={() => handleAddToCart(product)}
+                    disabled={
+                      product.trackInventory && product.quantity === 0
+                    }
+                    className={`mt-auto w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                       product.trackInventory && product.quantity === 0
                         ? "bg-gray-300 cursor-not-allowed"
                         : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
@@ -391,7 +345,6 @@ const Home = () => {
                       : "Add to Cart"}
                   </button>
 
-                  {/* Size indicators if available */}
                   {product.hasSizes && product.sizes?.length > 0 && (
                     <div className="mt-3 pt-2 border-t border-amber-100">
                       <div className="flex flex-wrap gap-1">
@@ -432,7 +385,7 @@ const Home = () => {
 
           <div className="text-center mt-12">
             <Link
-              href="/shop?premium=true"
+              href="/shop"
               className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-6 py-3 rounded-full font-semibold hover:bg-amber-600 hover:text-white transition-all duration-300 transform hover:scale-105"
             >
               Explore Full Collection
@@ -456,7 +409,6 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Eid Offer */}
             <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-amber-600 hover:bg-white/20 transition">
               <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaStar className="text-2xl text-white" />
@@ -473,7 +425,6 @@ const Home = () => {
               </button>
             </div>
 
-            {/* Durga Puja Offer */}
             <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-amber-600 hover:bg-white/20 transition">
               <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaGem className="text-2xl text-white" />
@@ -492,7 +443,6 @@ const Home = () => {
               </button>
             </div>
 
-            {/* Christmas Offer */}
             <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-amber-600 hover:bg-white/20 transition">
               <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaGift className="text-2xl text-white" />
@@ -530,7 +480,7 @@ const Home = () => {
                 key={product._id || product.id}
                 className="bg-white rounded-xl md:rounded-2xl shadow-md hover:shadow-xl border border-amber-100 transition-all duration-300 group flex flex-col h-full"
               >
-                 <Link href={`/shop/${product._id}`}>
+                <Link href={`/shop/${product._id}`}>
                   <div className="aspect-4/3 w-full cursor-pointer">
                     <Image
                       src={
@@ -568,7 +518,6 @@ const Home = () => {
                     )}
                   </div>
 
-                  {/* Stock status indicator */}
                   {product.trackInventory &&
                     product.quantity <= product.lowStockThreshold && (
                       <div className="mb-3">
@@ -583,7 +532,8 @@ const Home = () => {
                       disabled={
                         product.trackInventory && product.quantity === 0
                       }
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                      onClick={() => handleAddToCart(product)}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                         product.trackInventory && product.quantity === 0
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                           : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
@@ -593,12 +543,8 @@ const Home = () => {
                         ? "Out of Stock"
                         : "Add to Cart"}
                     </button>
-                    <button className="flex-1 py-2.5 rounded-lg text-sm font-semibold border border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2">
-                      <FaRegHeart />
-                    </button>
                   </div>
 
-                  {/* Size indicators if available */}
                   {product.hasSizes && product.sizes?.length > 0 && (
                     <div className="mt-3 pt-2 border-t border-amber-100">
                       <div className="flex flex-wrap gap-1">
@@ -657,8 +603,8 @@ const Home = () => {
               </p>
             </div>
             <Link
-              href="/shop?discount=true"
-              className="flex items-center text-amber-600 gap-2 font-semibold hover:text-amber-700 transition-colors group"
+              href="/shop"
+              className="flex items-center text-amber-600 gap-2 font-semibold hover:text-amber-700 transition-colors group cursor-pointer"
             >
               View All
               <FaAngleRight className="group-hover:translate-x-1 transition-transform" />
@@ -671,7 +617,7 @@ const Home = () => {
                 key={product._id || product.id}
                 className="bg-white rounded-xl md:rounded-2xl shadow-md hover:shadow-xl overflow-hidden border border-amber-100 transition-all duration-300 group flex flex-col h-full"
               >
-                 <Link href={`/shop/${product._id}`}>
+                <Link href={`/shop/${product._id}`}>
                   <div className="aspect-4/3 w-full cursor-pointer">
                     <Image
                       src={
@@ -692,7 +638,7 @@ const Home = () => {
                     </h2>
                     <button
                       onClick={() => toggleWishlist(product._id)}
-                      className="text-amber-400 hover:text-red-500 transition-colors"
+                      className="text-amber-400 hover:text-red-500 transition-colors cursor-pointer"
                     >
                       <FaRegHeart className="text-sm" />
                     </button>
@@ -702,7 +648,6 @@ const Home = () => {
                     {product.shortDescription}
                   </p>
 
-                  {/* Rating Stars */}
                   <div className="flex gap-1 mb-2">
                     {[...Array(5)].map((_, star) => (
                       <FaStar
@@ -719,7 +664,6 @@ const Home = () => {
                     </span>
                   </div>
 
-                  {/* Price Section */}
                   <div className="flex items-center justify-between mt-auto">
                     <div className="flex flex-col">
                       <span className="text-sm md:text-base font-bold text-amber-700 flex items-center gap-1">
@@ -738,21 +682,20 @@ const Home = () => {
                     </div>
 
                     <button
-                      onClick={() => addToCart(product)}
+                      onClick={() => handleAddToCart(product)}
                       disabled={
                         product.trackInventory && product.quantity === 0
                       }
                       className={`${
                         product.trackInventory && product.quantity === 0
                           ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800"
+                          : "bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
                       } text-white p-1.5 rounded-lg transition`}
                     >
                       <FaShoppingCart className="text-xs" />
                     </button>
                   </div>
 
-                  {/* Stock Status */}
                   {product.trackInventory &&
                     product.quantity <= product.lowStockThreshold &&
                     product.quantity > 0 && (
@@ -780,33 +723,6 @@ const Home = () => {
               </p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Newsletter & Premium Membership */}
-      <div className="py-16 bg-linear-to-r from-amber-900 to-amber-800">
-        <div className="w-11/12 mx-auto text-center">
-          <FaGem className="text-5xl mx-auto mb-4 text-amber-400" />
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-            Join Premium Leather Club
-          </h2>
-          <p className="text-amber-200 mb-6 max-w-2xl mx-auto">
-            Get exclusive access to limited edition fusion collections & special
-            occasion discounts
-          </p>
-          <div className="flex max-w-md mx-auto gap-3">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-full bg-white/10 border border-amber-500 text-white placeholder-amber-300 focus:outline-none focus:bg-white/20"
-            />
-            <button className="bg-amber-500 text-amber-900 px-6 py-3 rounded-full font-semibold hover:bg-amber-400 transition">
-              Subscribe
-            </button>
-          </div>
-          <p className="text-amber-300 text-xs mt-4">
-            Get 15% off on first purchase + Free shipping
-          </p>
         </div>
       </div>
     </section>

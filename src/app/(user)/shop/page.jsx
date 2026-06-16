@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   FaStar,
   FaRegHeart,
@@ -15,10 +15,11 @@ import { useBrands } from "@/hooks/useBrands";
 import toast from "react-hot-toast";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Shop = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     categories: [],
@@ -28,9 +29,43 @@ const Shop = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Fetch data from API
+  const { data: categoriesData = [] } = useCategories();
+  const { data: brandsData = [] } = useBrands();
+  const { addToCart, isInCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  // Transform categories from API
+  const categories = useMemo(() => {
+    const data = categoriesData?.data || categoriesData || [];
+    return data.map((cat) => ({
+      name: cat.name,
+      count: cat.productCount || 0,
+      id: cat._id,
+    }));
+  }, [categoriesData]);
+
+  // Transform brands from API
+  const brands = useMemo(() => {
+    const data = brandsData?.data || brandsData || [];
+    return data.map((brand) => ({
+      name: brand.name,
+      count: brand.productCount || 0,
+      id: brand._id,
+    }));
+  }, [brandsData]);
+
+  const priceRanges = [
+    { id: 1, range: "৳0 - ৳500", min: 0, max: 500 },
+    { id: 2, range: "৳500 - ৳1000", min: 500, max: 1000 },
+    { id: 3, range: "৳1000 - ৳2000", min: 1000, max: 2000 },
+    { id: 4, range: "৳2000+", min: 2000, max: 100000 },
+  ];
 
   // Build filter params for API
-  const getFilterParams = () => {
+  const filterParams = useMemo(() => {
     const params = {};
     
     if (searchTerm) params.search = searchTerm;
@@ -55,20 +90,15 @@ const Shop = () => {
     }
     
     return params;
-  };
+  }, [searchTerm, sortBy, currentPage, selectedFilters]);
 
-  // Fetch data from API
+  // UseProducts with filter params
   const { 
     data: productsResponse, 
     isLoading: productsLoading, 
     error: productsError,
     refetch 
-  } = useProducts(getFilterParams());
-
-  const { data: categoriesData = [] } = useCategories();
-  const { data: brandsData = [] } = useBrands();
-  const { addToCart, isInCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  } = useProducts(filterParams);
 
   // Extract products and pagination from response
   const products = productsResponse?.data || [];
@@ -78,27 +108,34 @@ const Shop = () => {
     limit: 12,
     pages: 1,
   };
-  
-  // Transform categories from API
-  const categories = (categoriesData?.data || categoriesData || []).map((cat) => ({
-    name: cat.name,
-    count: cat.productCount || 0,
-    id: cat._id,
-  }));
 
-  // Transform brands from API
-  const brands = (brandsData?.data || brandsData || []).map((brand) => ({
-    name: brand.name,
-    count: brand.productCount || 0,
-    id: brand._id,
-  }));
+  // Initialize filters from URL parameters - runs only once on mount
+  useEffect(() => {
+    if (isInitialized) return;
+    
+    const categoryParam = searchParams.get('category');
+    const categoryName = searchParams.get('categoryName');
+    
+    if (categoryParam && categories.length > 0) {
+      // Find the category in the categories list
+      const categoryExists = categories.some(cat => cat.id === categoryParam);
+      
+      if (categoryExists) {
+        setSelectedFilters(prev => ({
+          ...prev,
+          categories: [categoryParam]
+        }));
+        setIsInitialized(true);
+      }
+    }
+  }, [searchParams, categories, isInitialized]);
 
-  const priceRanges = [
-    { id: 1, range: "৳0 - ৳500", min: 0, max: 500 },
-    { id: 2, range: "৳500 - ৳1000", min: 500, max: 1000 },
-    { id: 3, range: "৳1000 - ৳2000", min: 1000, max: 2000 },
-    { id: 4, range: "৳2000+", min: 2000, max: 100000 },
-  ];
+  // Refetch when filter params change - but only when initialized
+  useEffect(() => {
+    if (isInitialized) {
+      refetch();
+    }
+  }, [filterParams, refetch, isInitialized]);
 
   const handleFilterChange = (type, value) => {
     setSelectedFilters((prev) => {
@@ -107,7 +144,6 @@ const Shop = () => {
         ? current.filter((v) => v !== value)
         : [...current, value];
       
-      console.log(`Filter changed - ${type}:`, updated);
       return { ...prev, [type]: updated };
     });
     setCurrentPage(1);
@@ -117,7 +153,6 @@ const Shop = () => {
     setSelectedFilters((prev) => {
       const isSelected = prev.priceRanges.some((r) => r.id === range.id);
       const updated = isSelected ? [] : [range];
-      console.log("Price range changed:", updated);
       return { ...prev, priceRanges: updated };
     });
     setCurrentPage(1);
@@ -132,6 +167,9 @@ const Shop = () => {
     setSearchTerm("");
     setSortBy("featured");
     setCurrentPage(1);
+    setIsInitialized(false);
+    // Remove category from URL
+    router.push('/shop');
   };
 
   const getActiveFiltersCount = () => {
@@ -202,10 +240,13 @@ const Shop = () => {
     router.push(`/shop/${productId}`);
   };
 
-  // Debug: Log current filters when they change
-  useEffect(() => {
-    console.log("Current filter params:", getFilterParams());
-  }, [selectedFilters, sortBy, searchTerm, currentPage]);
+  // Get the selected category name for display
+  const getSelectedCategoryName = () => {
+    const categoryId = selectedFilters.categories[0];
+    if (!categoryId) return null;
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || searchParams.get('categoryName') || 'Selected category';
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50">
@@ -430,6 +471,31 @@ const Shop = () => {
               )}
             </div>
 
+            {/* Active Category Filter Banner */}
+            {selectedFilters.categories.length > 0 && (
+              <div className="mb-6 p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-amber-700 font-medium">
+                    Filtering by category:
+                  </span>
+                  <span className="bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold">
+                    {getSelectedCategoryName()}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedFilters(prev => ({ ...prev, categories: [] }));
+                    setIsInitialized(false);
+                    router.push('/shop');
+                  }}
+                  className="text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1"
+                >
+                  <FaTimes className="text-xs" />
+                  Clear Filter
+                </button>
+              </div>
+            )}
+
             {/* Loading State */}
             {productsLoading && (
               <div className="flex justify-center items-center py-20">
@@ -473,7 +539,7 @@ const Shop = () => {
                       >
                         {/* Image Container */}
                         <div 
-                          className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100"
+                          className="relative overflow-hidden bg-linear-to-br from-amber-50 to-amber-100"
                           onClick={() => handleProductClick(product._id)}
                         >
                           <div className="aspect-square w-full">
@@ -587,9 +653,9 @@ const Shop = () => {
                               handleAddToCart(product);
                             }}
                             disabled={product.quantity === 0}
-                            className={`w-full py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
+                            className={`w-full py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                               product.quantity > 0
-                                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md"
+                                ? "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md"
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }`}
                           >

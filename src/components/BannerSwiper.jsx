@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 // Import Swiper styles
 import "swiper/css";
@@ -11,7 +12,9 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "swiper/css/effect-fade";
 
-const SideBanner = () => {
+const BannerSlider = () => {
+  const router = useRouter();
+
   const banners = [
     {
       id: 1,
@@ -45,6 +48,7 @@ const SideBanner = () => {
     },
   ];
 
+  
   return (
     <div className="w-full h-full">
       <Swiper
@@ -71,7 +75,8 @@ const SideBanner = () => {
         {banners.map((banner) => (
           <SwiperSlide key={banner.id}>
             <div
-              className={`relative h-full min-h-100 md:min-h-125 bg-linear-to-br ${banner.bgColor} overflow-hidden`}
+              className={`relative h-full min-h-100 md:min-h-125 bg-linear-to-br ${banner.bgColor} overflow-hidden cursor-pointer`}
+              onClick={() => handleSlideClick(banner.link)}
             >
               {/* Background Image */}
               <div className="absolute inset-0 opacity-70">
@@ -80,6 +85,7 @@ const SideBanner = () => {
                   alt={banner.title}
                   fill
                   className="object-cover"
+                  priority={banner.id === 1}
                 />
               </div>
 
@@ -90,7 +96,7 @@ const SideBanner = () => {
               {/* Content */}
               <div className="relative z-10 flex flex-col justify-center h-full p-6 md:p-8">
                 <div className="mb-3">
-                  <span className="inline-block px-3 py-1 bg-amber-500/20 backdrop-blur text-amber-100 text-xs font-semibold rounded-full border border-amber-400/30">
+                  <span className="inline-block px-3 py-1 bg-amber-500/20 backdrop-blur text-amber-100 text-xs font-semibold rounded-full border border-amber-400/30 cursor-default">
                     Limited Edition
                   </span>
                 </div>
@@ -113,29 +119,8 @@ const SideBanner = () => {
                   Handcrafted premium leather products with modern fusion designs.
                   Limited stock available.
                 </p>
-
-                <Link
-                  href={banner.link}
-                  className="inline-flex items-center gap-2 bg-white text-amber-800 px-5 py-2.5 rounded-full font-semibold hover:bg-amber-100 transition-all duration-300 w-fit group"
-                >
-                  {banner.buttonText}
-                  <svg
-                    className="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </Link>
-
                 {/* Offer Badge */}
-                <div className="absolute bottom-4 right-4 bg-amber-500/20 backdrop-blur rounded-lg px-3 py-1.5 border border-amber-400/30">
+                <div className="absolute bottom-4 right-4 bg-amber-500/20 backdrop-blur rounded-lg px-3 py-1.5 border border-amber-400/30 cursor-default">
                   <div className="flex items-center gap-2 text-amber-100 text-xs">
                     <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                     Limited Time Offer
@@ -158,6 +143,7 @@ const SideBanner = () => {
           height: 36px;
           border-radius: 50%;
           transition: all 0.3s ease;
+          cursor: pointer;
         }
         
         :global(.swiper-button-next:hover),
@@ -175,6 +161,7 @@ const SideBanner = () => {
         :global(.swiper-pagination-bullet) {
           background: white;
           opacity: 0.5;
+          cursor: pointer;
         }
         
         :global(.swiper-pagination-bullet-active) {
@@ -190,4 +177,4 @@ const SideBanner = () => {
   );
 };
 
-export default SideBanner;
+export default BannerSlider;

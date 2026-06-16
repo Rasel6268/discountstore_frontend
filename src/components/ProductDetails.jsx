@@ -102,49 +102,49 @@ const ShareModal = ({ isOpen, onClose, onShare, productName }) => {
         <div className="space-y-2">
           <button
             onClick={() => onShare("facebook")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition cursor-pointer"
           >
             <FaFacebook className="text-blue-600 text-xl" />
             <span>Facebook</span>
           </button>
           <button
             onClick={() => onShare("twitter")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition cursor-pointer"
           >
             <FaTwitter className="text-sky-500 text-xl" />
             <span>Twitter</span>
           </button>
           <button
             onClick={() => onShare("whatsapp")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition cursor-pointer"
           >
             <FaWhatsapp className="text-green-500 text-xl" />
             <span>WhatsApp</span>
           </button>
           <button
             onClick={() => onShare("telegram")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition cursor-pointer"
           >
             <FaTelegram className="text-blue-400 text-xl" />
             <span>Telegram</span>
           </button>
           <button
             onClick={() => onShare("linkedin")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition cursor-pointer"
           >
             <FaLinkedin className="text-blue-700 text-xl" />
             <span>LinkedIn</span>
           </button>
           <button
             onClick={() => onShare("email")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition cursor-pointer"
           >
             <FaEnvelope className="text-gray-600 text-xl" />
             <span>Email</span>
           </button>
           <button
             onClick={() => onShare("copy")}
-            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition border-t border-gray-200 mt-2 pt-3"
+            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg flex items-center gap-3 transition border-t border-gray-200 mt-2 pt-3 cursor-pointer"
           >
             <FaBoxOpen className="text-gray-600 text-xl" />
             <span>Copy Link</span>
@@ -152,7 +152,7 @@ const ShareModal = ({ isOpen, onClose, onShare, productName }) => {
         </div>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer"
         >
           ✕
         </button>
@@ -986,7 +986,7 @@ const ProductDetailsPage = () => {
                   <button
                     onClick={handleAddToCart}
                     disabled={!isInStock || (product.hasSizes && !selectedSize)}
-                    className="flex-1 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                     aria-label="Add to cart"
                   >
                     <FaShoppingCart aria-hidden="true" /> Add to Cart
@@ -994,25 +994,14 @@ const ProductDetailsPage = () => {
                   <button
                     onClick={handleBuyNow}
                     disabled={!isInStock || (product.hasSizes && !selectedSize)}
-                    className="flex-1 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     aria-label="Buy now"
                   >
                     Buy Now
                   </button>
                   <button
-                    onClick={handleWishlist}
-                    className="py-3 px-5 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
-                    aria-label={isInWishlist(product._id) ? "Remove from wishlist" : "Add to wishlist"}
-                  >
-                    {isInWishlist(product._id) ? (
-                      <FaHeart className="text-red-500 text-lg" aria-hidden="true" />
-                    ) : (
-                      <FaRegHeart className="text-lg" aria-hidden="true" />
-                    )}
-                  </button>
-                  <button
                     onClick={() => setShowShareModal(true)}
-                    className="py-3 px-5 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2"
+                    className="py-3 px-5 border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center justify-center gap-2 cursor-pointer"
                     aria-label="Share product"
                   >
                     <FaShareAlt aria-hidden="true" />

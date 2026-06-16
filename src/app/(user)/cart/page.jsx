@@ -18,19 +18,27 @@ import {
   FaVenusMars,
   FaChild,
   FaPalette,
+  FaTag,
+  FaTimes,
+  FaSpinner,
 } from "react-icons/fa";
 import { GiHandBag } from "react-icons/gi";
 import { useCart } from "@/hooks/useCart";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/AuthProvider/AuthProvider";
 import toast from "react-hot-toast";
+import api from "@/config/api";
 
 const CartPage = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
   const [shippingCost, setShippingCost] = useState(0);
-  
+
   const {
     items,
     removeFromCart,
@@ -38,10 +46,7 @@ const CartPage = () => {
     clearCart,
     getTotalItems,
     getTotalPrice,
-    getCartSummary,
-    getItemDisplayName,
   } = useCart();
-  console.log(items)
 
   const [cartItems, setCartItems] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
@@ -51,22 +56,30 @@ const CartPage = () => {
   // Get size type icon
   const getSizeTypeIcon = (type) => {
     if (!type) return <FaVenusMars className="text-purple-500" />;
-    switch(type) {
-      case 'men': return <FaMale className="text-blue-500" />;
-      case 'women': return <FaFemale className="text-pink-500" />;
-      case 'kids': return <FaChild className="text-green-500" />;
-      default: return <FaVenusMars className="text-purple-500" />;
+    switch (type) {
+      case "men":
+        return <FaMale className="text-blue-500" />;
+      case "women":
+        return <FaFemale className="text-pink-500" />;
+      case "kids":
+        return <FaChild className="text-green-500" />;
+      default:
+        return <FaVenusMars className="text-purple-500" />;
     }
   };
 
   // Get size type label
   const getSizeTypeLabel = (type) => {
-    if (!type) return 'Unisex';
-    switch(type) {
-      case 'men': return "Men's";
-      case 'women': return "Women's";
-      case 'kids': return "Kids'";
-      default: return 'Unisex';
+    if (!type) return "Unisex";
+    switch (type) {
+      case "men":
+        return "Men's";
+      case "women":
+        return "Women's";
+      case "kids":
+        return "Kids'";
+      default:
+        return "Unisex";
     }
   };
 
@@ -79,7 +92,7 @@ const CartPage = () => {
   const calculateTotals = () => {
     const subtotalAmount = getTotalPrice();
     setSubtotal(subtotalAmount);
-    
+
     const shipping = shippingCost;
     const discountAmount = discount;
     const totalAmount = subtotalAmount + shipping - discountAmount;
@@ -91,7 +104,12 @@ const CartPage = () => {
   }, [subtotal, shippingCost, discount]);
 
   // Handle quantity update
-  const handleQuantityUpdate = (productId, newQuantity, size = null, color = null) => {
+  const handleQuantityUpdate = (
+    productId,
+    newQuantity,
+    size = null,
+    color = null,
+  ) => {
     if (newQuantity < 1) {
       toast.error("Quantity cannot be less than 1");
       return;
@@ -103,7 +121,7 @@ const CartPage = () => {
   // Handle remove item
   const handleRemoveItem = (productId, size, color, productName) => {
     removeFromCart(productId, size, color);
-    let variantText = '';
+    let variantText = "";
     if (size) variantText += ` (Size: ${size.name})`;
     if (color) variantText += ` (Color: ${color.name})`;
     toast.success(`${productName}${variantText} removed from cart`);
@@ -113,7 +131,7 @@ const CartPage = () => {
   const handleSaveForLater = (item) => {
     removeFromCart(item.productId, item.size, item.color);
     setSavedForLater([...savedForLater, item]);
-    let variantText = '';
+    let variantText = "";
     if (item.size) variantText += ` (Size: ${item.size.name})`;
     if (item.color) variantText += ` (Color: ${item.color.name})`;
     toast.success(`${item.name}${variantText} saved for later`);
@@ -121,11 +139,14 @@ const CartPage = () => {
 
   // Handle move to cart from saved
   const handleMoveToCart = (item) => {
-    setSavedForLater(savedForLater.filter(i => 
-      i.productId !== item.productId || 
-      (i.size?.name !== item.size?.name) ||
-      (i.color?.name !== item.color?.name)
-    ));
+    setSavedForLater(
+      savedForLater.filter(
+        (i) =>
+          i.productId !== item.productId ||
+          i.size?.name !== item.size?.name ||
+          i.color?.name !== item.color?.name,
+      ),
+    );
     toast.success(`${item.name} moved to cart`);
   };
 
@@ -135,26 +156,56 @@ const CartPage = () => {
       toast.error("Please enter a coupon code");
       return;
     }
-    
+
+    setCouponLoading(true);
+    const coupondata = {
+      code: couponCode,
+      subtotal: subtotal,
+      userId: user?._id,
+    };
+
     try {
-      // Simulate API call for coupon validation
-      const response = await fetch("/api/coupons/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: couponCode, subtotal }),
-      });
-      
-      const data = await response.json();
-      
+      const response = await api.post("/coupons/validate", coupondata);
+
+      const data = response.data;
+    
       if (data.success) {
-        setDiscount(data.discount);
-        toast.success(`Coupon applied! You saved ৳${data.discount}`);
+        setDiscount(data.data.discount);
+        setAppliedCoupon({
+          code: data.data.code,
+          name: data.data.name,
+          discount: data.data.discount,
+          type: data.data.type,
+          couponId: data.data.couponId,
+          minPurchase: data.data.minPurchase,
+          maxDiscount: data.data.maxDiscount,
+        });
+        toast.success(
+          data.message ||
+            `Coupon applied! You saved ${formatPriceBDT(data.data.discount)}`,
+        );
+        setCouponCode("");
       } else {
         toast.error(data.message || "Invalid coupon code");
+        setDiscount(0);
+        setAppliedCoupon(null);
       }
     } catch (error) {
-      toast.error("Failed to apply coupon");
+      console.error("Coupon error:", error);
+      toast.error(error.response?.data?.message || "Failed to apply coupon");
+      setDiscount(0);
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
     }
+  };
+
+  // Handle remove coupon
+  const handleRemoveCoupon = () => {
+    setDiscount(0);
+    setAppliedCoupon(null);
+    setCouponCode("");
+    toast.success("Coupon removed");
   };
 
   // Handle checkout
@@ -163,11 +214,16 @@ const CartPage = () => {
       toast.error("Your cart is empty");
       return;
     }
-    
+
+    // Save applied coupon to localStorage for checkout
+    if (appliedCoupon) {
+      localStorage.setItem("appliedCoupon", JSON.stringify(appliedCoupon));
+    }
+
     setIsProcessing(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       router.push("/checkout");
     } catch (error) {
       toast.error("Failed to process checkout");
@@ -213,7 +269,7 @@ const CartPage = () => {
             Shopping Cart
           </h1>
           <p className="text-gray-600">
-            {cartItems.length > 0 
+            {cartItems.length > 0
               ? `You have ${getTotalItems()} item(s) in your cart`
               : "Your cart is waiting for you"}
           </p>
@@ -246,12 +302,12 @@ const CartPage = () => {
                         <th className="px-4 py-4 text-sm font-semibold text-gray-700">
                           Actions
                         </th>
-                       </tr>
+                      </tr>
                     </thead>
                     <tbody>
                       {cartItems.map((item) => (
                         <tr
-                          key={`${item.productId}_${item.size?.name || 'nosize'}_${item.color?.name || 'nocolor'}`}
+                          key={`${item.productId}_${item.size?.name || "nosize"}_${item.color?.name || "nocolor"}`}
                           className="border-b border-gray-100 hover:bg-amber-50/30 transition-colors"
                         >
                           {/* Product Info */}
@@ -277,7 +333,7 @@ const CartPage = () => {
                                 >
                                   {item.name}
                                 </Link>
-                                
+
                                 {/* Size Information */}
                                 {item.size && (
                                   <div className="flex items-center gap-2 mt-1">
@@ -302,7 +358,7 @@ const CartPage = () => {
                                     )}
                                   </div>
                                 )}
-                                
+
                                 {/* Color Information */}
                                 {item.color && (
                                   <div className="flex items-center gap-2 mt-1">
@@ -311,9 +367,11 @@ const CartPage = () => {
                                       Color: {item.color.name}
                                     </span>
                                     {item.color.hexCode && (
-                                      <div 
+                                      <div
                                         className="w-4 h-4 rounded-full border border-gray-300"
-                                        style={{ backgroundColor: item.color.hexCode }}
+                                        style={{
+                                          backgroundColor: item.color.hexCode,
+                                        }}
                                         title={item.color.name}
                                       />
                                     )}
@@ -324,13 +382,14 @@ const CartPage = () => {
                                     )}
                                   </div>
                                 )}
-                                
+
                                 {/* Original price if discounted */}
-                                {item.originalPrice && item.originalPrice > item.price && (
-                                  <p className="text-xs text-gray-400 line-through mt-1">
-                                    {formatPriceBDT(item.originalPrice)}
-                                  </p>
-                                )}
+                                {item.originalPrice &&
+                                  item.originalPrice > item.price && (
+                                    <p className="text-xs text-gray-400 line-through mt-1">
+                                      {formatPriceBDT(item.originalPrice)}
+                                    </p>
+                                  )}
                               </div>
                             </div>
                           </td>
@@ -341,9 +400,15 @@ const CartPage = () => {
                               <span className="text-gray-700 font-medium">
                                 {formatPriceBDT(item.price)}
                               </span>
-                              {(item.size?.extraPrice > 0 || item.color?.extraPrice > 0) && (
+                              {(item.size?.extraPrice > 0 ||
+                                item.color?.extraPrice > 0) && (
                                 <p className="text-xs text-gray-400">
-                                  Base: {formatPriceBDT(item.price - (item.size?.extraPrice || 0) - (item.color?.extraPrice || 0))}
+                                  Base:{" "}
+                                  {formatPriceBDT(
+                                    item.price -
+                                      (item.size?.extraPrice || 0) -
+                                      (item.color?.extraPrice || 0),
+                                  )}
                                 </p>
                               )}
                             </div>
@@ -358,7 +423,7 @@ const CartPage = () => {
                                     item.productId,
                                     item.quantity - 1,
                                     item.size,
-                                    item.color
+                                    item.color,
                                   )
                                 }
                                 className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
@@ -374,7 +439,7 @@ const CartPage = () => {
                                     item.productId,
                                     item.quantity + 1,
                                     item.size,
-                                    item.color
+                                    item.color,
                                   )
                                 }
                                 className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
@@ -383,9 +448,12 @@ const CartPage = () => {
                               </button>
                             </div>
                             {/* Stock indicator */}
-                            {item.maxStock && item.quantity >= item.maxStock && (
-                              <p className="text-xs text-red-500 mt-1">Max stock reached</p>
-                            )}
+                            {item.maxStock &&
+                              item.quantity >= item.maxStock && (
+                                <p className="text-xs text-red-500 mt-1">
+                                  Max stock reached
+                                </p>
+                              )}
                           </td>
 
                           {/* Total */}
@@ -419,7 +487,12 @@ const CartPage = () => {
                               </button>
                               <button
                                 onClick={() =>
-                                  handleRemoveItem(item.productId, item.size, item.color, item.name)
+                                  handleRemoveItem(
+                                    item.productId,
+                                    item.size,
+                                    item.color,
+                                    item.name,
+                                  )
                                 }
                                 className="p-2 text-red-500 hover:text-red-700 transition"
                                 title="Remove"
@@ -445,8 +518,12 @@ const CartPage = () => {
                   </Link>
                   <button
                     onClick={() => {
-                      if (confirm("Are you sure you want to clear your cart?")) {
+                      if (
+                        confirm("Are you sure you want to clear your cart?")
+                      ) {
                         clearCart();
+                        setAppliedCoupon(null);
+                        setDiscount(0);
                         toast.success("Cart cleared");
                       }
                     }}
@@ -468,7 +545,7 @@ const CartPage = () => {
                   <div className="divide-y divide-gray-100">
                     {savedForLater.map((item, idx) => (
                       <div
-                        key={`saved_${item.productId}_${item.size?.name || 'nosize'}_${item.color?.name || 'nocolor'}_${idx}`}
+                        key={`saved_${item.productId}_${item.size?.name || "nosize"}_${item.color?.name || "nocolor"}_${idx}`}
                         className="p-4 flex items-center justify-between hover:bg-amber-50/30 transition-colors"
                       >
                         <div className="flex items-center gap-3">
@@ -499,9 +576,11 @@ const CartPage = () => {
                               <p className="text-xs text-gray-500 flex items-center gap-1">
                                 Color: {item.color.name}
                                 {item.color.hexCode && (
-                                  <span 
+                                  <span
                                     className="w-3 h-3 rounded-full inline-block"
-                                    style={{ backgroundColor: item.color.hexCode }}
+                                    style={{
+                                      backgroundColor: item.color.hexCode,
+                                    }}
                                   />
                                 )}
                               </p>
@@ -537,33 +616,96 @@ const CartPage = () => {
                   {/* Subtotal */}
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal ({getTotalItems()} items)</span>
-                    <span className="font-medium">{formatPriceBDT(subtotal)}</span>
+                    <span className="font-medium">
+                      {formatPriceBDT(subtotal)}
+                    </span>
                   </div>
 
-                  {/* Coupon Code */}
+                  {/* Coupon Code Section - Updated */}
                   <div className="pt-2">
-                    <label className="block text-sm text-gray-600 mb-2">
+                    <label className="block text-sm text-gray-600 mb-2 flex items-center gap-2">
+                      <FaTag className="text-amber-500" />
                       Coupon Code
                     </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="Enter code"
-                        className="flex-1 px-3 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
-                      />
-                      <button
-                        onClick={handleApplyCoupon}
-                        className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                    {discount > 0 && (
-                      <p className="text-green-600 text-sm mt-2">
-                        Coupon applied! You saved {formatPriceBDT(discount)}
-                      </p>
+
+                    {appliedCoupon ? (
+                      // Applied coupon display
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-green-700 bg-green-100 px-2 py-1 rounded text-sm">
+                                {appliedCoupon.code}
+                              </span>
+                              <span className="text-xs text-green-600 capitalize">
+                                {appliedCoupon.type === "percentage"
+                                  ? `${appliedCoupon.discount}% off`
+                                  : appliedCoupon.type === "fixed"
+                                    ? `${formatPriceBDT(appliedCoupon.discount)} off`
+                                    : "Free Shipping"}
+                              </span>
+                            </div>
+                            <p className="text-sm text-green-700 mt-1">
+                              {appliedCoupon.name}
+                            </p>
+                            <p className="text-xs text-green-600 mt-1">
+                              Saved: {formatPriceBDT(appliedCoupon.discount)}
+                            </p>
+                            {appliedCoupon.minPurchase > 0 &&
+                              subtotal < appliedCoupon.minPurchase && (
+                                <p className="text-xs text-red-500 mt-1">
+                                  Add{" "}
+                                  {formatPriceBDT(
+                                    appliedCoupon.minPurchase - subtotal,
+                                  )}{" "}
+                                  more to use this coupon
+                                </p>
+                              )}
+                          </div>
+                          <button
+                            onClick={handleRemoveCoupon}
+                            className="text-red-500 hover:text-red-700 transition p-1"
+                            title="Remove coupon"
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // Coupon input form
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) =>
+                            setCouponCode(e.target.value.toUpperCase())
+                          }
+                          placeholder="Enter coupon code"
+                          className="flex-1 px-3 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                          disabled={couponLoading}
+                        />
+                        <button
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponCode}
+                          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {couponLoading ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <FaTag />
+                          )}
+                          Apply
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Available coupons hint */}
+                    {!appliedCoupon && (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-400">
+                          Try: WELCOME20, FIRST50, NEWMEMBER25, FIRSTSHIP
+                        </p>
+                      </div>
                     )}
                   </div>
 
@@ -578,7 +720,9 @@ const CartPage = () => {
                   <div className="border-t border-amber-100 pt-4">
                     <div className="flex justify-between text-lg font-bold text-gray-800">
                       <span>Total</span>
-                      <span className="text-amber-600">{formatPriceBDT(total)}</span>
+                      <span className="text-amber-600">
+                        {formatPriceBDT(total)}
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       *Taxes calculated at checkout
