@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import {
   FaStar,
   FaRegHeart,
@@ -17,7 +17,8 @@ import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const Shop = () => {
+// Separate component that uses useSearchParams
+function ShopContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -742,6 +743,25 @@ const Shop = () => {
       )}
     </div>
   );
-};
+}
 
-export default Shop;
+// Loading fallback component
+function ShopLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600 mx-auto"></div>
+        <p className="mt-4 text-amber-700 font-medium">Loading shop...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main Shop component with Suspense boundary
+export default function Shop() {
+  return (
+    <Suspense fallback={<ShopLoadingFallback />}>
+      <ShopContent />
+    </Suspense>
+  );
+}
