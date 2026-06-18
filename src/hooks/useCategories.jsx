@@ -38,7 +38,6 @@ export const useCategory = (id) => {
   });
 };
 
-
 // ================== MUTATIONS ==================
 
 // 🔹 Create category
@@ -50,14 +49,13 @@ export const useCreateCategory = () => {
     onSuccess: (res) => {
       queryClient.invalidateQueries(["categories"]);
       queryClient.invalidateQueries(["mainCategories"]);
-      toast.success(res.message || "Created!");
+      
     },
     onError: () => {
-      toast.error("Failed!");
+      
     },
   });
 };
-
 
 // 🔹 Update category
 export const useUpdateCategory = () => {
@@ -65,16 +63,11 @@ export const useUpdateCategory = () => {
 
   return useMutation({
     mutationFn: ({ id, data }) => categoryApi.updateCategory(id, data),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["categories"]);
-      toast.success(res.message || "Updated!");
-    },
-    onError: () => {
-      toast.error("Update failed!");
     },
   });
 };
-
 
 // 🔹 Delete category
 export const useDeleteCategory = () => {
@@ -82,12 +75,8 @@ export const useDeleteCategory = () => {
 
   return useMutation({
     mutationFn: categoryApi.deleteCategory,
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["categories"]);
-      toast.success(res.message || "Deleted!");
-    },
-    onError: () => {
-      toast.error("Delete failed!");
     },
   });
 };

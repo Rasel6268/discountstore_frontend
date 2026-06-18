@@ -283,9 +283,9 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
       hasSizes: sizeEnabled && formData.sizes.length > 0,
       sizes: sizeEnabled ? formData.sizes : [],
       hasColors: colorEnabled && formData.colors.length > 0,
-      colors: colorEnabled ? formData.colors : [], // Colors without quantity
+      colors: colorEnabled ? formData.colors : [], 
     };
-    console.log('Submitting product data:', submitData);
+    
     
     try {
       if (editingProduct) {

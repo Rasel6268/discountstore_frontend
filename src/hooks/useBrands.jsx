@@ -42,10 +42,10 @@ export const useCreateBrand = () => {
     mutationFn: brandApi.createBrand,
     onSuccess: (res) => {
       queryClient.invalidateQueries(["brands"]);
-      toast.success(res.message || "Brand created!");
+      
     },
     onError: () => {
-      toast.error("Failed to create brand!");
+      
     },
   });
 };
@@ -60,10 +60,10 @@ export const useUpdateBrand = () => {
     onSuccess: (res) => {
       queryClient.invalidateQueries(["brands"]);
       queryClient.invalidateQueries(["brand"]);
-      toast.success(res.message || "Brand updated!");
+     
     },
     onError: () => {
-      toast.error("Update failed!");
+     
     },
   });
 };
@@ -77,10 +77,9 @@ export const useDeleteBrand = () => {
     mutationFn: brandApi.deleteBrand,
     onSuccess: (res) => {
       queryClient.invalidateQueries(["brands"]);
-      toast.success(res.message || "Brand deleted!");
     },
     onError: () => {
-      toast.error("Delete failed!");
+      
     },
   });
 };

@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { categoryApi } from '@/services/categoryApi';
-import { X, Plus, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Plus, Loader2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
@@ -39,16 +39,33 @@ const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
         order: formData.order
       });
 
-      if (result.success) {
+      // The API returns the created subcategory directly
+      // Check if we got a valid response with an _id or name
+      if (result && (result._id || result.name)) {
         toast.success(`Subcategory "${formData.name}" added successfully!`);
         setFormData({ name: '', description: '', order: 0 });
         onSuccess?.();
         onCancel?.();
       } else {
-        setErrors({ submit: result.error });
+        // If result exists but doesn't have expected fields
+        toast.error('Failed to add subcategory: Invalid response from server');
+        setErrors({ submit: 'Invalid response from server' });
       }
     } catch (err) {
-      setErrors({ submit: err.message || 'Failed to add subcategory' });
+      // Handle error from API
+      let errorMessage = 'Failed to add subcategory';
+      
+      if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err?.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+      
+      // Show toast for error
+      toast.error(errorMessage);
+      setErrors({ submit: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -149,7 +166,7 @@ const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
+            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <Loader2 className="animate-spin mx-auto w-5 h-5" />
