@@ -226,7 +226,7 @@ const AdminCoupons = () => {
                 resetForm();
                 setShowModal(true);
               }}
-              className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition shadow-md"
+              className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition shadow-md cursor-pointer"
             >
               <FaPlus /> Create Coupon
             </button>
@@ -249,7 +249,7 @@ const AdminCoupons = () => {
                   resetForm();
                   setShowModal(true);
                 }}
-                className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition"
+                className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition cursor-pointer"
               >
                 Create Coupon
               </button>
@@ -330,21 +330,21 @@ const AdminCoupons = () => {
                         <div className="flex gap-2">
                           <button
                             onClick={() => editCoupon(coupon)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer"
                             title="Edit coupon"
                           >
                             <FaEdit />
                           </button>
                           <button
                             onClick={() => handleDelete(coupon._id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer cursor-pointer"
                             title="Delete coupon"
                           >
                             <FaTrash />
                           </button>
                           <button
                             onClick={() => handleToggleStatus(coupon)}
-                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition"
+                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition cursor-pointer"
                             title={coupon.status === "active" ? "Deactivate" : "Activate"}
                           >
                             {coupon.status === "active" ? (
@@ -378,7 +378,7 @@ const AdminCoupons = () => {
                     setShowModal(false);
                     resetForm();
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 cursor-pointer "
                 >
                   <FaTimes />
                 </button>
@@ -628,7 +628,7 @@ const AdminCoupons = () => {
                 <div className="flex gap-3 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600 transition font-semibold"
+                    className="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600 transition font-semibold cursor-pointer"
                   >
                     {editingCoupon ? "Update Coupon" : "Create Coupon"}
                   </button>
@@ -638,7 +638,7 @@ const AdminCoupons = () => {
                       setShowModal(false);
                       resetForm();
                     }}
-                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition font-semibold"
+                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition font-semibold cursor-pointer"
                   >
                     Cancel
                   </button>

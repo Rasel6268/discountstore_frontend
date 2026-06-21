@@ -14,13 +14,16 @@ import {
   FolderOpen,
   Loader2,
   Package,
-  MoreVertical
+  MoreVertical,
+  X,
+  AlertTriangle
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CategoryList = ({ onEdit, onAddSubcategory }) => {
   const [open, setOpen] = useState({});
   const [hoveredId, setHoveredId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const { data: categories = [], isLoading, error, refetch } = useCategories();
   const deleteCategory = useDeleteCategory();
 
@@ -32,32 +35,65 @@ const CategoryList = ({ onEdit, onAddSubcategory }) => {
       return;
     }
 
-    toast.custom((t) => (
-      <div className="bg-white rounded-lg shadow-lg p-4 max-w-md">
-        <h3 className="font-semibold mb-2">Delete Category?</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Are you sure you want to delete "{name}"? This action cannot be undone.
-        </p>
-        <div className="flex gap-2 justify-end">
+    toast.custom(
+      (t) => (
+        <div className="relative bg-white rounded-2xl shadow-2xl border border-red-100 p-6 max-w-md w-full mx-4 animate-in slide-in-from-top-4 duration-300">
+          {/* Close button */}
           <button
             onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1 text-sm border rounded"
+            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
           >
-            Cancel
+            <X size={18} />
           </button>
-          <button
-            onClick={async () => {
-              toast.dismiss(t.id);
-              await deleteCategory.mutateAsync(id);
-              toast.success(`"${name}" deleted successfully`);
-            }}
-            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
+
+          {/* Icon and Title */}
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-12 h-12 bg-red-50 rounded-full flex items-center justify-center">
+              <AlertTriangle className="text-red-500" size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-800 mb-1">
+                Delete Category
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-red-600">"{name}"</span>?
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                This action cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                setDeletingId(id);
+                await deleteCategory.mutateAsync(id);
+                setDeletingId(null);
+                toast.success(`"${name}" deleted successfully`);
+              }}
+              className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Trash2 size={16} />
+              Delete Category
+            </button>
+          </div>
         </div>
-      </div>
-    ));
+      ),
+      {
+        duration: 5000,
+        position: "top-center",
+      }
+    );
   };
 
   if (isLoading) {
@@ -75,7 +111,10 @@ const CategoryList = ({ onEdit, onAddSubcategory }) => {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
         <div className="text-red-500 mb-2">Failed to load categories</div>
-        <button onClick={() => refetch()} className="text-purple-600 hover:underline">
+        <button 
+          onClick={() => refetch()} 
+          className="text-purple-600 hover:underline cursor-pointer"
+        >
           Try again
         </button>
       </div>
@@ -120,7 +159,7 @@ const CategoryList = ({ onEdit, onAddSubcategory }) => {
                     {cat.subcategories?.length > 0 && (
                       <button
                         onClick={() => toggle(cat._id)}
-                        className="text-gray-400 hover:text-purple-600 transition-colors"
+                        className="text-gray-400 hover:text-purple-600 transition-colors cursor-pointer"
                       >
                         {open[cat._id] ? (
                           <ChevronDown className="w-5 h-5" />
@@ -151,27 +190,28 @@ const CategoryList = ({ onEdit, onAddSubcategory }) => {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <button
                       onClick={() => onAddSubcategory(cat)}
-                      className="p-2 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-green-50"
+                      className="p-2 text-gray-400 hover:text-green-600 transition-colors rounded-lg hover:bg-green-50 cursor-pointer"
                       title="Add Subcategory"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onEdit(cat)}
-                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50 cursor-pointer"
                       title="Edit Category"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(cat._id, cat.name, cat.subcategories?.length)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50"
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete Category"
+                      disabled={deletingId === cat._id}
                     >
-                      {deleteCategory.isLoading && deleteCategory.variables === cat._id ? (
+                      {deletingId === cat._id ? (
                         <Loader2 className="animate-spin w-4 h-4" />
                       ) : (
                         <Trash2 className="w-4 h-4" />
@@ -208,18 +248,21 @@ const CategoryList = ({ onEdit, onAddSubcategory }) => {
                               )}
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-1">
                             <button
                               onClick={() => onEdit(sub)}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded hover:bg-blue-50 cursor-pointer"
+                              title="Edit Subcategory"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDelete(sub._id, sub.name, false)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Delete Subcategory"
+                              disabled={deletingId === sub._id}
                             >
-                              {deleteCategory.isLoading && deleteCategory.variables === sub._id ? (
+                              {deletingId === sub._id ? (
                                 <Loader2 className="animate-spin w-3.5 h-3.5" />
                               ) : (
                                 <Trash2 className="w-3.5 h-3.5" />

@@ -213,7 +213,7 @@ const CategoryForm = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="flex-1 bg-linear-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50"
+            className="flex-1 bg-linear-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="animate-spin mx-auto w-5 h-5" />

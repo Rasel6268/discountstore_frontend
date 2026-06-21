@@ -152,7 +152,7 @@ const ProductsPage = () => {
         <div className="flex gap-3 justify-end">
           <button
             onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1.5 bg-gray-200 rounded-md hover:bg-gray-300"
+            className="px-3 py-1.5 bg-gray-200 rounded-md hover:bg-gray-300 cursor-pointer"
           >
             Cancel
           </button>
@@ -172,7 +172,7 @@ const ProductsPage = () => {
                 toast.error('Failed to delete product');
               }
             }}
-            className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700"
+            className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer"
           >
             Delete
           </button>
@@ -283,7 +283,7 @@ const ProductsPage = () => {
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing || isRefetching || isFetching}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {(isRefreshing || isRefetching || isFetching) ? (
                   <Loader2 className="animate-spin" size={18} />
@@ -297,7 +297,7 @@ const ProductsPage = () => {
                   setEditingProduct(null);
                   setShowProductForm(true);
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-all"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-all cursor-pointer"
               >
                 <Plus size={18} />
                 Add Product
@@ -324,7 +324,7 @@ const ProductsPage = () => {
             
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
             >
               <Filter size={18} />
               Filters
@@ -440,7 +440,7 @@ const ProductsPage = () => {
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+                    className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer"
                   >
                     <X size={14} />
                     Clear all filters
@@ -463,7 +463,7 @@ const ProductsPage = () => {
               <p className="text-red-600 mb-4">Failed to load products</p>
               <button
                 onClick={handleRefresh}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer"
               >
                 Try Again
               </button>
@@ -475,7 +475,7 @@ const ProductsPage = () => {
               <p className="text-gray-400 mb-4">Get started by adding your first product</p>
               <button
                 onClick={() => setShowProductForm(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2 cursor-pointer"
               >
                 <Plus size={18} />
                 Add Product
@@ -488,7 +488,7 @@ const ProductsPage = () => {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-gray-700">
+                        <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-gray-700 cursor-pointer">
                           Product <SortIcon field="name" />
                         </button>
                       </th>
@@ -496,7 +496,7 @@ const ProductsPage = () => {
                         SKU
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('regularPrice')} className="flex items-center gap-1 hover:text-gray-700">
+                        <button onClick={() => handleSort('regularPrice')} className="flex items-center gap-1 hover:text-gray-700 cursor-pointer">
                           Price <SortIcon field="regularPrice" />
                         </button>
                       </th>
@@ -504,7 +504,7 @@ const ProductsPage = () => {
                         Category/Brand
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('quantity')} className="flex items-center gap-1 hover:text-gray-700">
+                        <button onClick={() => handleSort('quantity')} className="flex items-center gap-1 hover:text-gray-700 cursor-pointer">
                           Stock <SortIcon field="quantity" />
                         </button>
                       </th>
@@ -512,7 +512,7 @@ const ProductsPage = () => {
                         Status & Badges
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1 hover:text-gray-700">
+                        <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1 hover:text-gray-700 cursor-pointer">
                           Created <SortIcon field="createdAt" />
                         </button>
                       </th>
@@ -601,21 +601,21 @@ const ProductsPage = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleView(product)}
-                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                               title="View"
                             >
                               <Eye size={18} />
                             </button>
                             <button
                               onClick={() => handleEdit(product)}
-                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer"
                               title="Edit"
                             >
                               <Edit size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(product._id, product.name)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                               title="Delete"
                             >
                               <Trash2 size={18} />
@@ -638,7 +638,7 @@ const ProductsPage = () => {
                     <button
                       onClick={() => handleFilterChange('page', filters.page - 1)}
                       disabled={filters.page === 1}
-                      className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
+                      className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white cursor-pointer"
                     >
                       Previous
                     </button>
@@ -659,7 +659,7 @@ const ProductsPage = () => {
                           <button
                             key={pageNum}
                             onClick={() => handleFilterChange('page', pageNum)}
-                            className={`px-3 py-1 border rounded-md ${
+                            className={`px-3 py-1 border rounded-md cursor-pointer ${
                               filters.page === pageNum
                                 ? 'bg-blue-600 text-white border-blue-600'
                                 : 'border-gray-300 hover:bg-white'
@@ -673,7 +673,7 @@ const ProductsPage = () => {
                     <button
                       onClick={() => handleFilterChange('page', filters.page + 1)}
                       disabled={filters.page === pagination.pages}
-                      className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white"
+                      className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white cursor-pointer"
                     >
                       Next
                     </button>
@@ -705,7 +705,7 @@ const ProductsPage = () => {
           <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold">Product Details</h2>
-              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 cursor-pointer">
                 <X size={24} />
               </button>
             </div>
@@ -782,13 +782,13 @@ const ProductsPage = () => {
                     closeModal();
                     handleEdit(selectedProduct);
                   }}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 cursor-pointer"
                 >
                   Edit Product
                 </button>
                 <button
                   onClick={closeModal}
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300"
+                  className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 cursor-pointer"
                 >
                   Close
                 </button>

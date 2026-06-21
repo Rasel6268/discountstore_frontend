@@ -310,7 +310,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
           <Package size={24} className="text-blue-600" />
           {editingProduct ? 'Edit Product' : 'Add New Product'}
         </h2>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 cursor-pointer">
           <X size={24} />
         </button>
       </div>
@@ -538,7 +538,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                         key={color._id}
                         type="button"
                         onClick={() => isSelected ? handleRemoveColor(color._id) : handleAddColor(color)}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-pointer ${
                           isSelected 
                             ? 'border-pink-500 bg-pink-50' 
                             : 'border-gray-200 hover:border-pink-300'
@@ -575,7 +575,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                         <button
                           type="button"
                           onClick={() => handleRemoveColor(color._id)}
-                          className="text-red-500 hover:text-red-700 ml-1"
+                          className="text-red-500 hover:text-red-700 ml-1 cursor-pointer"
                         >
                           <X size={16} />
                         </button>
@@ -800,7 +800,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               <button
                 type="button"
                 onClick={handleAddImage}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
               >
                 Add
               </button>
@@ -816,7 +816,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                   <button
                     type="button"
                     onClick={() => handleSetPrimaryImage(idx)}
-                    className={`text-xs px-2 py-1 rounded ${img.isPrimary ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                    className={`text-xs px-2 py-1 rounded cursor-pointer ${img.isPrimary ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
                   >
                     {img.isPrimary ? 'Primary' : 'Set Primary'}
                   </button>
@@ -955,7 +955,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all font-medium"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-all font-medium cursor-pointer"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">

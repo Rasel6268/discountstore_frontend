@@ -1,75 +1,104 @@
-// components/admin/SubCategoryForm.jsx
+// components/admin/CategoryForm.jsx
 'use client';
 
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { categoryApi } from '@/services/categoryApi';
-import { X, Plus, Loader2, AlertCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  useCreateCategory,
+  useUpdateCategory,
+  useMainCategories,
+} from "@/hooks/useCategories";
+import { 
+  X, 
+  Plus, 
+  Loader2, 
+  FolderPlus, 
+  CheckCircle,
+  AlertCircle,
+  Trash2
+} from "lucide-react";
+import toast from "react-hot-toast";
 
-const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
+const CategoryForm = ({
+  onSuccess,
+  editingCategory,
+  setEditingCategory,
+  parentCategoryId = null,
+  onCancel,
+}) => {
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    order: 0
+    name: "",
+    description: "",
+    parentCategory: "",
+    order: 0,
   });
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const { data: mainCategories = [] } = useMainCategories();
+  const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
+
+  useEffect(() => {
+    if (editingCategory) {
+      setFormData({
+        name: editingCategory.name,
+        description: editingCategory.description || "",
+        parentCategory: editingCategory.parentCategory?._id || editingCategory.parentCategory || "",
+        order: editingCategory.order || 0,
+      });
+    } else if (parentCategoryId) {
+      setFormData((prev) => ({ ...prev, parentCategory: parentCategoryId }));
+    }
+  }, [editingCategory, parentCategoryId]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: name === "order" ? Number(value) : value });
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
+  };
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Subcategory name is required';
-    if (formData.name.length < 2) newErrors.name = 'Name must be at least 2 characters';
-    if (formData.name.length > 50) newErrors.name = 'Name must be less than 50 characters';
+    if (!formData.name.trim()) newErrors.name = "Category name is required";
+    if (formData.name.length < 2) newErrors.name = "Name must be at least 2 characters";
+    if (formData.name.length > 50) newErrors.name = "Name must be less than 50 characters";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const reset = () => {
+    setFormData({ name: "", description: "", parentCategory: "", order: 0 });
+    setErrors({});
+    setEditingCategory?.(null);
+    onCancel?.();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    setLoading(true);
-    setErrors({});
+    const payload = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      order: formData.order,
+    };
 
     try {
-      const result = await categoryApi.createSubCategory(parentCategory._id, {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        order: formData.order
-      });
-
-      // The API returns the created subcategory directly
-      // Check if we got a valid response with an _id or name
-      if (result && (result._id || result.name)) {
-        toast.success(`Subcategory "${formData.name}" added successfully!`);
-        setFormData({ name: '', description: '', order: 0 });
-        onSuccess?.();
-        onCancel?.();
+      if (editingCategory) {
+        await updateCategory.mutateAsync({ id: editingCategory._id, data: payload });
+        toast.success("Category updated successfully!");
       } else {
-        // If result exists but doesn't have expected fields
-        toast.error('Failed to add subcategory: Invalid response from server');
-        setErrors({ submit: 'Invalid response from server' });
+        await createCategory.mutateAsync(payload);
+        toast.success("Category created successfully!");
       }
+      reset();
+      onSuccess?.();
     } catch (err) {
-      // Handle error from API
-      let errorMessage = 'Failed to add subcategory';
-      
-      if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err?.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err?.message) {
-        errorMessage = err.message;
-      }
-      
-      // Show toast for error
-      toast.error(errorMessage);
-      setErrors({ submit: errorMessage });
-    } finally {
-      setLoading(false);
+      toast.error(err.message || "Something went wrong");
     }
   };
+
+  const isLoading = createCategory.isLoading || updateCategory.isLoading;
 
   return (
     <motion.div
@@ -79,20 +108,22 @@ const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
       className="bg-white rounded-2xl shadow-xl overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
+      <div className="bg-linear-to-r from-purple-600 to-indigo-600 px-6 py-4">
         <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-white font-semibold text-lg">Add Subcategory</h3>
-            <p className="text-emerald-100 text-sm mt-1">
-              to: {parentCategory.name}
-            </p>
+          <div className="flex items-center gap-2 text-white">
+            <FolderPlus className="w-5 h-5" />
+            <h2 className="text-xl font-semibold">
+              {editingCategory ? "Edit Category" : "Create New Category"}
+            </h2>
           </div>
-          <button
-            onClick={onCancel}
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {(editingCategory || parentCategoryId) && (
+            <button
+              onClick={reset}
+              className="text-white/80 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -101,19 +132,17 @@ const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
         {/* Name Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Subcategory Name <span className="text-red-500">*</span>
+            Category Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
+            name="name"
             value={formData.name}
-            onChange={(e) => {
-              setFormData({ ...formData, name: e.target.value });
-              if (errors.name) setErrors({ ...errors, name: '' });
-            }}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all ${
-              errors.name ? 'border-red-500' : 'border-gray-300'
+            onChange={handleChange}
+            placeholder="e.g., Electronics, Fashion, Books"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+              errors.name ? "border-red-500" : "border-gray-300"
             }`}
-            placeholder="e.g., Smartphones, Laptops, Accessories"
           />
           {errors.name && (
             <p className="mt-1 text-sm text-red-500 flex items-center gap-1">
@@ -128,13 +157,39 @@ const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
             Description
           </label>
           <textarea
+            name="description"
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={handleChange}
             rows="3"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-            placeholder="Brief description of the subcategory..."
+            placeholder="Brief description of the category..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
           />
         </div>
+
+        {/* Parent Category */}
+        {!editingCategory && !parentCategoryId && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Parent Category
+            </label>
+            <select
+              name="parentCategory"
+              value={formData.parentCategory}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all cursor-pointer"
+            >
+              <option value="">Main Category (No Parent)</option>
+              {mainCategories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              Leave empty to create a main category
+            </p>
+          </div>
+        )}
 
         {/* Display Order */}
         <div>
@@ -143,51 +198,46 @@ const SubCategoryForm = ({ parentCategory, onSuccess, onCancel }) => {
           </label>
           <input
             type="number"
+            name="order"
             value={formData.order}
-            onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+            onChange={handleChange}
             min="0"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
           />
           <p className="mt-1 text-xs text-gray-500">
             Lower numbers appear first in the list
           </p>
         </div>
 
-        {/* Submit Error */}
-        {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700">
-            <AlertCircle className="w-5 h-5" />
-            <span className="text-sm">{errors.submit}</span>
-          </div>
-        )}
-
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            disabled={loading}
-            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
+            className="flex-1 bg-linear-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
           >
-            {loading ? (
+            {isLoading ? (
               <Loader2 className="animate-spin mx-auto w-5 h-5" />
+            ) : editingCategory ? (
+              "Update Category"
             ) : (
-              <>
-                <Plus className="w-4 h-4 inline mr-2" />
-                Add Subcategory
-              </>
+              "Create Category"
             )}
           </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all"
-          >
-            Cancel
-          </button>
+
+          {(editingCategory || parentCategoryId) && (
+            <button
+              type="button"
+              onClick={reset}
+              className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
         </div>
       </form>
     </motion.div>
   );
 };
 
-export default SubCategoryForm;
+export default CategoryForm;

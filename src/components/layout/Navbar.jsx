@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/AuthProvider/AuthProvider";
 import { useCart } from "@/hooks/useCart";
-import { useWishlist } from "@/hooks/useWishlist";
 import Marquee from "react-fast-marquee";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -40,7 +39,6 @@ const Navbar = () => {
   const categoriesDropdownRef = useRef(null);
   const { user, logout } = useAuth();
   const { getTotalItems, items: cartItems } = useCart();
-  const { getWishlistCount, wishlistItems } = useWishlist();
   const router = useRouter();
   const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 
@@ -74,8 +72,7 @@ const Navbar = () => {
   // Get cart count (total items including quantities)
   const cartCount = mounted ? getTotalItems() : 0;
 
-  // Get wishlist count
-  const wishlistCount = mounted ? getWishlistCount() : 0;
+
 
   // Logout handler
   const handleLogout = async () => {
@@ -314,18 +311,6 @@ const Navbar = () => {
                         </span>
                       )}
                     </Link>
-                    <Link
-                      href="/wishlist"
-                      className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                    >
-                      <FaHeart className="w-4 h-4" /> 
-                      Wishlist
-                      {wishlistCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                          {wishlistCount}
-                        </span>
-                      )}
-                    </Link>
                     {user.role === "admin" ? (
                       <Link
                         href="/dashboard"
@@ -453,40 +438,6 @@ const Navbar = () => {
               onClick={toggleMobileMenu}
             >
               <ShoppingBag className="w-4 h-4" /> Shop
-            </Link>
-
-            {/* Cart Link in Mobile */}
-            <Link
-              href="/cart"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-              onClick={toggleMobileMenu}
-            >
-              <div className="flex items-center gap-3">
-                <AiOutlineShoppingCart className="w-4 h-4" /> 
-                My Cart
-              </div>
-              {cartCount > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-
-            {/* Wishlist Link in Mobile */}
-            <Link
-              href="/wishlist"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-              onClick={toggleMobileMenu}
-            >
-              <div className="flex items-center gap-3">
-                <FaHeart className="w-4 h-4" /> 
-                Wishlist
-              </div>
-              {wishlistCount > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                  {wishlistCount}
-                </span>
-              )}
             </Link>
 
             <Link
