@@ -85,7 +85,7 @@ const CheckoutPage = () => {
   }, 0);
 
   const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
-  const tax = (subtotal - couponDiscount) * 0.05;
+  const tax = (subtotal - couponDiscount) * 0;
   const total = subtotal + shippingCost + tax - couponDiscount;
 
   const shippingMethods = {
@@ -1517,7 +1517,7 @@ const CheckoutPage = () => {
                   <span>{formatPriceBDT(shippingCost)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>VAT (5%)</span>
+                  <span>VAT (0%)</span>
                   <span>{formatPriceBDT(tax)}</span>
                 </div>
                 <div className="border-t border-gray-200 pt-3 mt-3">

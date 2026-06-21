@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  Suspense,
+} from "react";
 import {
   FaStar,
   FaRegHeart,
@@ -68,42 +74,42 @@ function ShopContent() {
   // Build filter params for API
   const filterParams = useMemo(() => {
     const params = {};
-    
+
     if (searchTerm) params.search = searchTerm;
     if (sortBy) params.sortBy = sortBy;
     if (currentPage) params.page = currentPage;
-    
+
     // Categories - send as comma-separated string
     if (selectedFilters.categories.length > 0) {
-      params.category = selectedFilters.categories.join(',');
+      params.category = selectedFilters.categories.join(",");
     }
-    
+
     // Brands - send as comma-separated string
     if (selectedFilters.brands.length > 0) {
-      params.brand = selectedFilters.brands.join(',');
+      params.brand = selectedFilters.brands.join(",");
     }
-    
+
     // Price range
     if (selectedFilters.priceRanges.length > 0) {
       const priceRange = selectedFilters.priceRanges[0];
       if (priceRange.min !== undefined) params.minPrice = priceRange.min;
       if (priceRange.max !== undefined) params.maxPrice = priceRange.max;
     }
-    
+
     return params;
   }, [searchTerm, sortBy, currentPage, selectedFilters]);
 
   // UseProducts with filter params
-  const { 
-    data: productsResponse, 
-    isLoading: productsLoading, 
+  const {
+    data: productsResponse,
+    isLoading: productsLoading,
     error: productsError,
-    refetch 
+    refetch,
   } = useProducts(filterParams);
 
   // Extract products and pagination from response
   const products = productsResponse?.data || [];
-  console.log("this is the product data",products)
+  console.log("this is the product data", products);
   const pagination = productsResponse?.pagination || {
     total: 0,
     page: 1,
@@ -114,18 +120,18 @@ function ShopContent() {
   // Initialize filters from URL parameters - runs only once on mount
   useEffect(() => {
     if (isInitialized) return;
-    
-    const categoryParam = searchParams.get('category');
-    const categoryName = searchParams.get('categoryName');
-    
+
+    const categoryParam = searchParams.get("category");
+    const categoryName = searchParams.get("categoryName");
+
     if (categoryParam && categories.length > 0) {
       // Find the category in the categories list
-      const categoryExists = categories.some(cat => cat.id === categoryParam);
-      
+      const categoryExists = categories.some((cat) => cat.id === categoryParam);
+
       if (categoryExists) {
-        setSelectedFilters(prev => ({
+        setSelectedFilters((prev) => ({
           ...prev,
-          categories: [categoryParam]
+          categories: [categoryParam],
         }));
         setIsInitialized(true);
       }
@@ -145,7 +151,7 @@ function ShopContent() {
       const updated = current.includes(value)
         ? current.filter((v) => v !== value)
         : [...current, value];
-      
+
       return { ...prev, [type]: updated };
     });
     setCurrentPage(1);
@@ -171,7 +177,7 @@ function ShopContent() {
     setCurrentPage(1);
     setIsInitialized(false);
     // Remove category from URL
-    router.push('/shop');
+    router.push("/shop");
   };
 
   const getActiveFiltersCount = () => {
@@ -196,7 +202,7 @@ function ShopContent() {
         quantity: 1,
         image: product.images?.[0]?.url,
       });
-      
+
       if (result.success) {
         toast.success(`${product.name} added to cart!`);
       } else {
@@ -210,7 +216,7 @@ function ShopContent() {
   const handleWishlist = async (product) => {
     try {
       const inWishlist = isInWishlist(product._id);
-      
+
       if (inWishlist) {
         await removeFromWishlist(product._id);
         toast.success(`${product.name} removed from wishlist`);
@@ -246,8 +252,10 @@ function ShopContent() {
   const getSelectedCategoryName = () => {
     const categoryId = selectedFilters.categories[0];
     if (!categoryId) return null;
-    const category = categories.find(c => c.id === categoryId);
-    return category?.name || searchParams.get('categoryName') || 'Selected category';
+    const category = categories.find((c) => c.id === categoryId);
+    return (
+      category?.name || searchParams.get("categoryName") || "Selected category"
+    );
   };
 
   return (
@@ -358,7 +366,9 @@ function ShopContent() {
                           <div className="flex items-center gap-3">
                             <input
                               type="checkbox"
-                              checked={selectedFilters.categories.includes(category.id)}
+                              checked={selectedFilters.categories.includes(
+                                category.id,
+                              )}
                               onChange={() =>
                                 handleFilterChange("categories", category.id)
                               }
@@ -390,7 +400,9 @@ function ShopContent() {
                           <div className="flex items-center gap-3">
                             <input
                               type="checkbox"
-                              checked={selectedFilters.brands.includes(brand.id)}
+                              checked={selectedFilters.brands.includes(
+                                brand.id,
+                              )}
                               onChange={() =>
                                 handleFilterChange("brands", brand.id)
                               }
@@ -460,7 +472,8 @@ function ShopContent() {
                   All Products
                 </h2>
                 <p className="text-gray-500 text-sm mt-1">
-                  Showing {products?.length || 0} of {pagination.total || 0} products
+                  Showing {products?.length || 0} of {pagination.total || 0}{" "}
+                  products
                 </p>
               </div>
               {getActiveFiltersCount() > 0 && (
@@ -486,9 +499,9 @@ function ShopContent() {
                 </div>
                 <button
                   onClick={() => {
-                    setSelectedFilters(prev => ({ ...prev, categories: [] }));
+                    setSelectedFilters((prev) => ({ ...prev, categories: [] }));
                     setIsInitialized(false);
-                    router.push('/shop');
+                    router.push("/shop");
                   }}
                   className="text-amber-600 hover:text-amber-800 font-medium flex items-center gap-1"
                 >
@@ -540,7 +553,7 @@ function ShopContent() {
                         className="group bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-amber-100 overflow-hidden cursor-pointer"
                       >
                         {/* Image Container */}
-                        <div 
+                        <div
                           className="relative overflow-hidden bg-linear-to-br from-amber-50 to-amber-100"
                           onClick={() => handleProductClick(product._id)}
                         >
@@ -606,7 +619,7 @@ function ShopContent() {
                           </div>
 
                           {/* Name */}
-                          <h3 
+                          <h3
                             className="font-semibold text-gray-800 text-sm md:text-base line-clamp-2 mb-2 group-hover:text-amber-600 transition"
                             onClick={() => handleProductClick(product._id)}
                           >
@@ -631,11 +644,12 @@ function ShopContent() {
                                   product.discountPrice || product.regularPrice,
                                 )}
                               </span>
-                              {product.discountPrice && product.discountPrice > 0 && (
-                                <span className="block text-[10px] text-gray-400 line-through">
-                                  {formatPriceBDT(product.regularPrice)}
-                                </span>
-                              )}
+                              {product.discountPrice &&
+                                product.discountPrice > 0 && (
+                                  <span className="block text-[10px] text-gray-400 line-through">
+                                    {formatPriceBDT(product.regularPrice)}
+                                  </span>
+                                )}
                             </div>
                             <span
                               className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
@@ -644,7 +658,9 @@ function ShopContent() {
                                   : "text-red-600 bg-red-50"
                               }`}
                             >
-                              {product.quantity > 0 ? "In Stock" : "Out of Stock"}
+                              {product.quantity > 0
+                                ? "In Stock"
+                                : "Out of Stock"}
                             </span>
                           </div>
 
@@ -652,7 +668,14 @@ function ShopContent() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleAddToCart(product);
+                              const isProductInCart = isInCart(product._id);
+
+                              if (isProductInCart) {
+                                window.location.href = "/cart";
+                              } else {
+                                // Add to cart if not already in cart
+                                handleAddToCart(product);
+                              }
                             }}
                             disabled={product.quantity === 0}
                             className={`w-full py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
@@ -661,12 +684,19 @@ function ShopContent() {
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }`}
                           >
-                            <FaShoppingCart className="text-xs" />
-                            {isInCart(product._id) 
-                              ? "View Cart" 
-                              : product.quantity > 0
-                                ? "Add to Cart"
-                                : "Out of Stock"}
+                            {isInCart(product._id) ? (
+                              <>
+                                <FaShoppingCart className="text-xs" />
+                                View Cart
+                              </>
+                            ) : product.quantity > 0 ? (
+                              <>
+                                <FaShoppingCart className="text-xs" />
+                                Add to Cart
+                              </>
+                            ) : (
+                              "Out of Stock"
+                            )}
                           </button>
                         </div>
                       </div>

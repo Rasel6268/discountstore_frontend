@@ -38,6 +38,11 @@ const CartPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [shippingCost, setShippingCost] = useState(0);
+  
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState(null);
 
   const {
     items,
@@ -46,6 +51,7 @@ const CartPage = () => {
     clearCart,
     getTotalItems,
     getTotalPrice,
+    isLoading: cartLoading,
   } = useCart();
 
   const [cartItems, setCartItems] = useState([]);
@@ -84,8 +90,16 @@ const CartPage = () => {
   };
 
   useEffect(() => {
-    setCartItems(items);
-    calculateTotals();
+    // Simulate loading data
+    const loadData = async () => {
+      setIsLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setCartItems(items);
+      calculateTotals();
+      setIsLoading(false);
+    };
+    
+    loadData();
   }, [items]);
 
   // Calculate totals
@@ -103,8 +117,8 @@ const CartPage = () => {
     calculateTotals();
   }, [subtotal, shippingCost, discount]);
 
-  // Handle quantity update
-  const handleQuantityUpdate = (
+  // Handle quantity update with loading
+  const handleQuantityUpdate = async (
     productId,
     newQuantity,
     size = null,
@@ -114,43 +128,86 @@ const CartPage = () => {
       toast.error("Quantity cannot be less than 1");
       return;
     }
-    updateQuantity(productId, newQuantity, size, color);
-    toast.success("Cart updated");
+    
+    // Show loading for this specific item
+    setUpdatingItemId(`${productId}_${size?.name || 'nosize'}_${color?.name || 'nocolor'}`);
+    setIsUpdatingQuantity(true);
+    
+    try {
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      updateQuantity(productId, newQuantity, size, color);
+      toast.success("Cart updated");
+    } catch (error) {
+      toast.error("Failed to update quantity");
+    } finally {
+      setIsUpdatingQuantity(false);
+      setUpdatingItemId(null);
+    }
   };
 
-  // Handle remove item
-  const handleRemoveItem = (productId, size, color, productName) => {
-    removeFromCart(productId, size, color);
-    let variantText = "";
-    if (size) variantText += ` (Size: ${size.name})`;
-    if (color) variantText += ` (Color: ${color.name})`;
-    toast.success(`${productName}${variantText} removed from cart`);
+  // Handle remove item with loading
+  const handleRemoveItem = async (productId, size, color, productName) => {
+    const itemId = `${productId}_${size?.name || 'nosize'}_${color?.name || 'nocolor'}`;
+    setUpdatingItemId(itemId);
+    setIsUpdatingQuantity(true);
+    
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      removeFromCart(productId, size, color);
+      let variantText = "";
+      if (size) variantText += ` (Size: ${size.name})`;
+      if (color) variantText += ` (Color: ${color.name})`;
+      toast.success(`${productName}${variantText} removed from cart`);
+    } catch (error) {
+      toast.error("Failed to remove item");
+    } finally {
+      setIsUpdatingQuantity(false);
+      setUpdatingItemId(null);
+    }
   };
 
-  // Handle save for later
-  const handleSaveForLater = (item) => {
-    removeFromCart(item.productId, item.size, item.color);
-    setSavedForLater([...savedForLater, item]);
-    let variantText = "";
-    if (item.size) variantText += ` (Size: ${item.size.name})`;
-    if (item.color) variantText += ` (Color: ${item.color.name})`;
-    toast.success(`${item.name}${variantText} saved for later`);
+  // Handle save for later with loading
+  const handleSaveForLater = async (item) => {
+    const itemId = `${item.productId}_${item.size?.name || 'nosize'}_${item.color?.name || 'nocolor'}`;
+    setUpdatingItemId(itemId);
+    setIsUpdatingQuantity(true);
+    
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      removeFromCart(item.productId, item.size, item.color);
+      setSavedForLater([...savedForLater, item]);
+      let variantText = "";
+      if (item.size) variantText += ` (Size: ${item.size.name})`;
+      if (item.color) variantText += ` (Color: ${item.color.name})`;
+      toast.success(`${item.name}${variantText} saved for later`);
+    } catch (error) {
+      toast.error("Failed to save for later");
+    } finally {
+      setIsUpdatingQuantity(false);
+      setUpdatingItemId(null);
+    }
   };
 
   // Handle move to cart from saved
-  const handleMoveToCart = (item) => {
-    setSavedForLater(
-      savedForLater.filter(
-        (i) =>
-          i.productId !== item.productId ||
-          i.size?.name !== item.size?.name ||
-          i.color?.name !== item.color?.name,
-      ),
-    );
-    toast.success(`${item.name} moved to cart`);
+  const handleMoveToCart = async (item) => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      setSavedForLater(
+        savedForLater.filter(
+          (i) =>
+            i.productId !== item.productId ||
+            i.size?.name !== item.size?.name ||
+            i.color?.name !== item.color?.name,
+        ),
+      );
+      toast.success(`${item.name} moved to cart`);
+    } catch (error) {
+      toast.error("Failed to move to cart");
+    }
   };
 
-  // Handle apply coupon
+  // Handle apply coupon with loading
   const handleApplyCoupon = async () => {
     if (!couponCode) {
       toast.error("Please enter a coupon code");
@@ -166,7 +223,6 @@ const CartPage = () => {
 
     try {
       const response = await api.post("/coupons/validate", coupondata);
-
       const data = response.data;
     
       if (data.success) {
@@ -208,7 +264,7 @@ const CartPage = () => {
     toast.success("Coupon removed");
   };
 
-  // Handle checkout
+  // Handle checkout with loading
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
       toast.error("Your cart is empty");
@@ -238,6 +294,46 @@ const CartPage = () => {
     return `৳${Math.round(price).toLocaleString("en-US")}`;
   };
 
+  // Loading Skeleton Component
+  const LoadingSkeleton = () => (
+    <div className="bg-white rounded-2xl shadow-lg border border-amber-100 overflow-hidden">
+      <div className="p-6 animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="h-8 bg-amber-200 rounded w-48"></div>
+          <div className="h-6 bg-amber-200 rounded w-24"></div>
+        </div>
+        
+        {/* Table header skeleton */}
+        <div className="hidden md:grid grid-cols-5 gap-4 mb-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-6 bg-amber-100 rounded"></div>
+          ))}
+        </div>
+        
+        {/* Cart items skeleton */}
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="flex flex-col md:flex-row gap-4 py-4 border-t border-amber-100">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-20 h-20 bg-amber-200 rounded-lg"></div>
+              <div className="flex-1">
+                <div className="h-5 bg-amber-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-amber-100 rounded w-1/2"></div>
+                <div className="h-4 bg-amber-100 rounded w-1/3 mt-1"></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="h-6 bg-amber-200 rounded w-20"></div>
+              <div className="h-10 bg-amber-200 rounded w-24"></div>
+              <div className="h-6 bg-amber-200 rounded w-16"></div>
+              <div className="h-8 bg-amber-200 rounded w-8"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   // Empty cart component
   const EmptyCart = () => (
     <div className="text-center py-16 md:py-24">
@@ -259,6 +355,21 @@ const CartPage = () => {
       </Link>
     </div>
   );
+
+  // Show loading state
+  if (isLoading || cartLoading) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50 py-8 md:py-12">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="mb-8">
+            <div className="h-10 bg-amber-200 rounded w-64 animate-pulse"></div>
+            <div className="h-6 bg-amber-100 rounded w-80 mt-2 animate-pulse"></div>
+          </div>
+          <LoadingSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50 py-8 md:py-12">
@@ -305,204 +416,226 @@ const CartPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {cartItems.map((item) => (
-                        <tr
-                          key={`${item.productId}_${item.size?.name || "nosize"}_${item.color?.name || "nocolor"}`}
-                          className="border-b border-gray-100 hover:bg-amber-50/30 transition-colors"
-                        >
-                          {/* Product Info */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0">
-                                {item.image ? (
-                                  <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center">
-                                    <GiHandBag className="text-2xl text-amber-400" />
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <Link
-                                  href={`/product/${item.productId}`}
-                                  className="font-semibold text-gray-800 hover:text-amber-600 transition line-clamp-2"
-                                >
-                                  {item.name}
-                                </Link>
-
-                                {/* Size Information */}
-                                {item.size && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <div className="flex items-center gap-1">
-                                      {getSizeTypeIcon(item.size.type)}
-                                      <span className="text-xs font-medium text-gray-600">
-                                        {getSizeTypeLabel(item.size.type)}
-                                      </span>
+                      {cartItems.map((item) => {
+                        const itemKey = `${item.productId}_${item.size?.name || "nosize"}_${item.color?.name || "nocolor"}`;
+                        const isItemUpdating = updatingItemId === itemKey && isUpdatingQuantity;
+                        
+                        return (
+                          <tr
+                            key={itemKey}
+                            className={`border-b border-gray-100 hover:bg-amber-50/30 transition-colors ${isItemUpdating ? 'opacity-60' : ''}`}
+                          >
+                            {/* Product Info */}
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0 relative">
+                                  {isItemUpdating && (
+                                    <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                                      <FaSpinner className="animate-spin text-amber-500" />
                                     </div>
-                                    <span className="text-xs bg-amber-100 px-2 py-0.5 rounded-full text-amber-700 font-medium">
-                                      Size: {item.size.name}
-                                    </span>
-                                    {item.size.extraPrice > 0 && (
-                                      <span className="text-xs text-green-600">
-                                        +{formatPriceBDT(item.size.extraPrice)}
-                                      </span>
-                                    )}
-                                    {item.size.sku && (
-                                      <span className="text-xs text-gray-400">
-                                        SKU: {item.size.sku}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Color Information */}
-                                {item.color && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <FaPalette className="text-xs text-pink-500" />
-                                    <span className="text-xs bg-pink-100 px-2 py-0.5 rounded-full text-pink-700 font-medium">
-                                      Color: {item.color.name}
-                                    </span>
-                                    {item.color.hexCode && (
-                                      <div
-                                        className="w-4 h-4 rounded-full border border-gray-300"
-                                        style={{
-                                          backgroundColor: item.color.hexCode,
-                                        }}
-                                        title={item.color.name}
-                                      />
-                                    )}
-                                    {item.color.extraPrice > 0 && (
-                                      <span className="text-xs text-green-600">
-                                        +{formatPriceBDT(item.color.extraPrice)}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
-                                {/* Original price if discounted */}
-                                {item.originalPrice &&
-                                  item.originalPrice > item.price && (
-                                    <p className="text-xs text-gray-400 line-through mt-1">
-                                      {formatPriceBDT(item.originalPrice)}
-                                    </p>
                                   )}
+                                  {item.image ? (
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <GiHandBag className="text-2xl text-amber-400" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <Link
+                                    href={`/product/${item.productId}`}
+                                    className="font-semibold text-gray-800 hover:text-amber-600 transition line-clamp-2"
+                                  >
+                                    {item.name}
+                                  </Link>
+
+                                  {/* Size Information */}
+                                  {item.size && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <div className="flex items-center gap-1">
+                                        {getSizeTypeIcon(item.size.type)}
+                                        <span className="text-xs font-medium text-gray-600">
+                                          {getSizeTypeLabel(item.size.type)}
+                                        </span>
+                                      </div>
+                                      <span className="text-xs bg-amber-100 px-2 py-0.5 rounded-full text-amber-700 font-medium">
+                                        Size: {item.size.name}
+                                      </span>
+                                      {item.size.extraPrice > 0 && (
+                                        <span className="text-xs text-green-600">
+                                          +{formatPriceBDT(item.size.extraPrice)}
+                                        </span>
+                                      )}
+                                      {item.size.sku && (
+                                        <span className="text-xs text-gray-400">
+                                          SKU: {item.size.sku}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Color Information */}
+                                  {item.color && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <FaPalette className="text-xs text-pink-500" />
+                                      <span className="text-xs bg-pink-100 px-2 py-0.5 rounded-full text-pink-700 font-medium">
+                                        Color: {item.color.name}
+                                      </span>
+                                      {item.color.hexCode && (
+                                        <div
+                                          className="w-4 h-4 rounded-full border border-gray-300"
+                                          style={{
+                                            backgroundColor: item.color.hexCode,
+                                          }}
+                                          title={item.color.name}
+                                        />
+                                      )}
+                                      {item.color.extraPrice > 0 && (
+                                        <span className="text-xs text-green-600">
+                                          +{formatPriceBDT(item.color.extraPrice)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Original price if discounted */}
+                                  {item.originalPrice &&
+                                    item.originalPrice > item.price && (
+                                      <p className="text-xs text-gray-400 line-through mt-1">
+                                        {formatPriceBDT(item.originalPrice)}
+                                      </p>
+                                    )}
+                                </div>
                               </div>
-                            </div>
-                          </td>
+                            </td>
 
-                          {/* Price */}
-                          <td className="px-4 py-4">
-                            <div>
-                              <span className="text-gray-700 font-medium">
-                                {formatPriceBDT(item.price)}
-                              </span>
-                              {(item.size?.extraPrice > 0 ||
-                                item.color?.extraPrice > 0) && (
-                                <p className="text-xs text-gray-400">
-                                  Base:{" "}
-                                  {formatPriceBDT(
-                                    item.price -
-                                      (item.size?.extraPrice || 0) -
-                                      (item.color?.extraPrice || 0),
-                                  )}
-                                </p>
-                              )}
-                            </div>
-                          </td>
+                            {/* Price */}
+                            <td className="px-4 py-4">
+                              <div>
+                                <span className="text-gray-700 font-medium">
+                                  {formatPriceBDT(item.price)}
+                                </span>
+                                {(item.size?.extraPrice > 0 ||
+                                  item.color?.extraPrice > 0) && (
+                                  <p className="text-xs text-gray-400">
+                                    Base:{" "}
+                                    {formatPriceBDT(
+                                      item.price -
+                                        (item.size?.extraPrice || 0) -
+                                        (item.color?.extraPrice || 0),
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            </td>
 
-                          {/* Quantity */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() =>
-                                  handleQuantityUpdate(
-                                    item.productId,
-                                    item.quantity - 1,
-                                    item.size,
-                                    item.color,
-                                  )
-                                }
-                                className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
-                              >
-                                <FaMinus className="text-xs text-gray-600" />
-                              </button>
-                              <span className="w-12 text-center font-medium text-gray-800">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleQuantityUpdate(
-                                    item.productId,
-                                    item.quantity + 1,
-                                    item.size,
-                                    item.color,
-                                  )
-                                }
-                                className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
-                              >
-                                <FaPlus className="text-xs text-gray-600" />
-                              </button>
-                            </div>
-                            {/* Stock indicator */}
-                            {item.maxStock &&
-                              item.quantity >= item.maxStock && (
-                                <p className="text-xs text-red-500 mt-1">
-                                  Max stock reached
-                                </p>
-                              )}
-                          </td>
-
-                          {/* Total */}
-                          <td className="px-4 py-4">
-                            <span className="font-bold text-amber-600">
-                              {formatPriceBDT(item.price * item.quantity)}
-                            </span>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleSaveForLater(item)}
-                                className="p-2 text-gray-500 hover:text-amber-600 transition"
-                                title="Save for later"
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                            {/* Quantity */}
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() =>
+                                    handleQuantityUpdate(
+                                      item.productId,
+                                      item.quantity - 1,
+                                      item.size,
+                                      item.color,
+                                    )
+                                  }
+                                  disabled={isItemUpdating}
+                                  className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                                  />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleRemoveItem(
-                                    item.productId,
-                                    item.size,
-                                    item.color,
-                                    item.name,
-                                  )
-                                }
-                                className="p-2 text-red-500 hover:text-red-700 transition"
-                                title="Remove"
-                              >
-                                <FaTrash className="text-sm" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                  <FaMinus className="text-xs text-gray-600" />
+                                </button>
+                                <span className="w-12 text-center font-medium text-gray-800">
+                                  {isItemUpdating ? (
+                                    <FaSpinner className="animate-spin mx-auto text-amber-500" />
+                                  ) : (
+                                    item.quantity
+                                  )}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    handleQuantityUpdate(
+                                      item.productId,
+                                      item.quantity + 1,
+                                      item.size,
+                                      item.color,
+                                    )
+                                  }
+                                  disabled={isItemUpdating}
+                                  className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  <FaPlus className="text-xs text-gray-600" />
+                                </button>
+                              </div>
+                              {/* Stock indicator */}
+                              {item.maxStock &&
+                                item.quantity >= item.maxStock && (
+                                  <p className="text-xs text-red-500 mt-1">
+                                    Max stock reached
+                                  </p>
+                                )}
+                            </td>
+
+                            {/* Total */}
+                            <td className="px-4 py-4">
+                              <span className="font-bold text-amber-600">
+                                {formatPriceBDT(item.price * item.quantity)}
+                              </span>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleSaveForLater(item)}
+                                  disabled={isItemUpdating}
+                                  className="p-2 text-gray-500 hover:text-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Save for later"
+                                >
+                                  <svg
+                                    className="w-5 h-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                                    />
+                                  </svg>
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleRemoveItem(
+                                      item.productId,
+                                      item.size,
+                                      item.color,
+                                      item.name,
+                                    )
+                                  }
+                                  disabled={isItemUpdating}
+                                  className="p-2 text-red-500 hover:text-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Remove"
+                                >
+                                  {isItemUpdating ? (
+                                    <FaSpinner className="animate-spin text-sm" />
+                                  ) : (
+                                    <FaTrash className="text-sm" />
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -621,7 +754,7 @@ const CartPage = () => {
                     </span>
                   </div>
 
-                  {/* Coupon Code Section - Updated */}
+                  {/* Coupon Code Section */}
                   <div className="pt-2">
                     <label className="block text-sm text-gray-600 mb-2 flex items-center gap-2">
                       <FaTag className="text-amber-500" />
@@ -737,7 +870,7 @@ const CartPage = () => {
                   >
                     {isProcessing ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <FaSpinner className="animate-spin" />
                         Processing...
                       </>
                     ) : (
@@ -763,56 +896,6 @@ const CartPage = () => {
                       bKash | Nagad | Rocket also accepted
                     </p>
                   </div>
-                </div>
-              </div>
-
-              {/* Recommended Products Section */}
-              <div className="mt-6 bg-white rounded-2xl shadow-lg border border-amber-100 p-6">
-                <h3 className="font-semibold text-gray-800 mb-4">
-                  You Might Also Like
-                </h3>
-                <div className="space-y-3">
-                  {[
-                    {
-                      id: 1,
-                      name: "Premium Leather Bag",
-                      price: 8999,
-                      image: null,
-                    },
-                    {
-                      id: 2,
-                      name: "Designer Sunglasses",
-                      price: 12999,
-                      image: null,
-                    },
-                  ].map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-amber-50 transition cursor-pointer"
-                      onClick={() => router.push(`/product/${product.id}`)}
-                    >
-                      <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <GiHandBag className="text-2xl text-amber-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">
-                          {product.name}
-                        </p>
-                        <p className="text-sm text-amber-600">
-                          {formatPriceBDT(product.price)}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toast.success("Added to cart");
-                        }}
-                        className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
-                      >
-                        <FaShoppingCart className="text-xs" />
-                      </button>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

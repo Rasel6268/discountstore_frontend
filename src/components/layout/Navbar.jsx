@@ -236,6 +236,19 @@ const Navbar = () => {
             <FaSearch className="text-lg" />
           </button>
 
+          {/* Cart Icon - Desktop */}
+          <Link
+            href="/cart"
+            className="hidden lg:flex relative p-2 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
+          >
+            <AiOutlineShoppingCart className="text-2xl" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-bounce">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </Link>
+
           {/* Theme Toggle Button */}
           {themeMounted && (
             <button
@@ -289,11 +302,34 @@ const Navbar = () => {
                     </div>
                   </div>
                   <div className="py-2">
+                    <Link
+                      href="/cart"
+                      className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+                    >
+                      <AiOutlineShoppingCart className="w-4 h-4" /> 
+                      My Cart
+                      {cartCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {cartCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
+                      href="/wishlist"
+                      className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+                    >
+                      <FaHeart className="w-4 h-4" /> 
+                      Wishlist
+                      {wishlistCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </Link>
                     {user.role === "admin" ? (
                       <Link
                         href="/dashboard"
                         className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                        onClick={toggleMobileMenu}
                       >
                         <User className="w-4 h-4" /> Dashboard
                       </Link>
@@ -301,7 +337,6 @@ const Navbar = () => {
                       <Link
                         href="/profile"
                         className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                        onClick={toggleMobileMenu}
                       >
                         <User className="w-4 h-4" /> My Profile
                       </Link>
@@ -347,12 +382,20 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
+            className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 relative"
           >
             {isMenuOpen ? (
               <IoIosClose className="text-2xl text-gray-900 dark:text-white" />
             ) : (
-              <IoIosMenu className="text-2xl text-gray-900 dark:text-white" />
+              <>
+                <IoIosMenu className="text-2xl text-gray-900 dark:text-white" />
+                {/* Mobile cart badge */}
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
+              </>
             )}
           </button>
         </div>
@@ -410,6 +453,40 @@ const Navbar = () => {
               onClick={toggleMobileMenu}
             >
               <ShoppingBag className="w-4 h-4" /> Shop
+            </Link>
+
+            {/* Cart Link in Mobile */}
+            <Link
+              href="/cart"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+              onClick={toggleMobileMenu}
+            >
+              <div className="flex items-center gap-3">
+                <AiOutlineShoppingCart className="w-4 h-4" /> 
+                My Cart
+              </div>
+              {cartCount > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            {/* Wishlist Link in Mobile */}
+            <Link
+              href="/wishlist"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+              onClick={toggleMobileMenu}
+            >
+              <div className="flex items-center gap-3">
+                <FaHeart className="w-4 h-4" /> 
+                Wishlist
+              </div>
+              {wishlistCount > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
 
             <Link
