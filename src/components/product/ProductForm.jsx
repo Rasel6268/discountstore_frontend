@@ -1,66 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { useCreateProduct, useUpdateProduct } from '@/hooks/useProducts';
-import { useCategories } from '@/hooks/useCategories';
-import { useBrands } from '@/hooks/useBrands';
-import { X, Plus, Loader2, Package, DollarSign, Box, Image, Truck, Calendar, Ruler, Shirt, Star, Crown, Award, Palette } from 'lucide-react';
-import ProductSizeManager from '../ProductSizeManager';
-import { useQuery } from '@tanstack/react-query';
-import api from '@/config/api';
+import React, { useState, useEffect } from "react";
+import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
+import { useCategories } from "@/hooks/useCategories";
+import { useBrands } from "@/hooks/useBrands";
+import {
+  X,
+  Plus,
+  Loader2,
+  Package,
+  DollarSign,
+  Box,
+  Image,
+  Truck,
+  Calendar,
+  Ruler,
+  Shirt,
+  Star,
+  Crown,
+  Award,
+  Palette,
+} from "lucide-react";
+import ProductSizeManager from "../ProductSizeManager";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/config/api";
+import toast from "react-hot-toast";
 
-const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel }) => {
+const ProductForm = ({
+  onSuccess,
+  editingProduct,
+  setEditingProduct,
+  onCancel,
+}) => {
   const [formData, setFormData] = useState({
     // Basic Info
-    name: '',
-    description: '',
-    shortDescription: '',
-    
+    name: "",
+    description: "",
+    shortDescription: "",
+
     // Pricing
-    regularPrice: '',
-    discountPrice: '',
-    costPerItem: '',
-    
+    regularPrice: "",
+    discountPrice: "",
+    costPerItem: "",
+
     // Categories
-    category: '',
-    subcategory: '',
-    brand: '',
-    
+    category: "",
+    subcategory: "",
+    brand: "",
+
     // Inventory
-    sku: '',
-    quantity: '',
-    lowStockThreshold: '10',
+    sku: "",
+    quantity: "",
+    lowStockThreshold: "10",
     trackInventory: true,
     allowBackorder: false,
-    
+
     // Size Management
     hasSizes: false,
     sizes: [],
-    
+
     // Color Management
     hasColors: false,
     colors: [],
-    
+
     // Images
     images: [],
-    
+
     // Status
-    status: 'draft',
+    status: "draft",
     isActive: true,
     isFeatured: false,
     isPremium: false,
     isBest: false,
     isPublished: false,
     isFreeShipping: false,
-    
+
     // Variants (optional)
     variants: [],
   });
-  
+
   const [errors, setErrors] = useState({});
-  const [imageInput, setImageInput] = useState({ url: '', alt: '' });
+  const [imageInput, setImageInput] = useState({ url: "", alt: "" });
   const [showVariants, setShowVariants] = useState(false);
   const [sizeEnabled, setSizeEnabled] = useState(false);
   const [colorEnabled, setColorEnabled] = useState(false);
-  
+
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const { data: categories = [] } = useCategories();
@@ -68,40 +90,41 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
 
   // Fetch colors from API
   const { data: colorsData = [] } = useQuery({
-    queryKey: ['colors'],
+    queryKey: ["colors"],
     queryFn: async () => {
-      const res = await api.get('/colors/all');
+      const res = await api.get("/colors/all");
       return res.data?.data || res.data || [];
-    }
+    },
   });
 
   // Transform colors data
-  const availableColors = colorsData.map(color => ({
+  const availableColors = colorsData.map((color) => ({
     _id: color._id,
     name: color.name,
-    hexCode: color.hexCode || '#000000',
-    isActive: color.isActive
+    hexCode: color.hexCode || "#000000",
+    isActive: color.isActive,
   }));
 
   // Get subcategories based on selected category
-  const selectedCategory = categories.find(c => c._id === formData.category);
+  const selectedCategory = categories.find((c) => c._id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
 
   useEffect(() => {
     if (editingProduct) {
       setFormData({
-        name: editingProduct.name || '',
-        description: editingProduct.description || '',
-        shortDescription: editingProduct.shortDescription || '',
-        regularPrice: editingProduct.regularPrice || '',
-        discountPrice: editingProduct.discountPrice || '',
-        costPerItem: editingProduct.costPerItem || '',
-        category: editingProduct.category?._id || editingProduct.category || '',
-        subcategory: editingProduct.subcategory?._id || editingProduct.subcategory || '',
-        brand: editingProduct.brand?._id || editingProduct.brand || '',
-        sku: editingProduct.sku || '',
-        quantity: editingProduct.quantity || '',
-        lowStockThreshold: editingProduct.lowStockThreshold || '10',
+        name: editingProduct.name || "",
+        description: editingProduct.description || "",
+        shortDescription: editingProduct.shortDescription || "",
+        regularPrice: editingProduct.regularPrice || "",
+        discountPrice: editingProduct.discountPrice || "",
+        costPerItem: editingProduct.costPerItem || "",
+        category: editingProduct.category?._id || editingProduct.category || "",
+        subcategory:
+          editingProduct.subcategory?._id || editingProduct.subcategory || "",
+        brand: editingProduct.brand?._id || editingProduct.brand || "",
+        sku: editingProduct.sku || "",
+        quantity: editingProduct.quantity || "",
+        lowStockThreshold: editingProduct.lowStockThreshold || "10",
         trackInventory: editingProduct.trackInventory !== false,
         allowBackorder: editingProduct.allowBackorder || false,
         hasSizes: editingProduct.hasSizes || false,
@@ -109,7 +132,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
         hasColors: editingProduct.hasColors || false,
         colors: editingProduct.colors || [],
         images: editingProduct.images || [],
-        status: editingProduct.status || 'draft',
+        status: editingProduct.status || "draft",
         isActive: editingProduct.isActive !== false,
         isFeatured: editingProduct.isFeatured || false,
         isPremium: editingProduct.isPremium || false,
@@ -125,19 +148,38 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+
+    // Handle numeric fields - prevent negative values
+    if (type === "number") {
+      const numValue = parseFloat(value);
+      // Allow empty string or positive numbers (including 0)
+      if (value === "" || numValue >= 0) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value, // Keep as string for input display
+        }));
+      }
+      // If negative, don't update
+      return;
+    }
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
+
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
   const handleSizesChange = (sizes) => {
-    const totalQuantity = sizes.reduce((sum, size) => sum + (size.quantity || 0), 0);
-    
-    setFormData(prev => ({
+    const totalQuantity = sizes.reduce(
+      (sum, size) => sum + (size.quantity || 0),
+      0,
+    );
+
+    setFormData((prev) => ({
       ...prev,
       sizes: sizes,
       quantity: sizeEnabled ? totalQuantity : prev.quantity,
@@ -147,33 +189,33 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
 
   const handleSizeToggle = (enabled) => {
     setSizeEnabled(enabled);
-    
+
     if (!enabled) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         sizes: [],
         hasSizes: false,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         hasSizes: true,
       }));
     }
   };
 
-  // Color Management Functions - Only track which colors are selected, no quantity
+  // Color Management Functions
   const handleColorToggle = (enabled) => {
     setColorEnabled(enabled);
-    
+
     if (!enabled) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         colors: [],
         hasColors: false,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         hasColors: true,
       }));
@@ -181,19 +223,18 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
   };
 
   const handleAddColor = (color) => {
-    // Check if color already exists
-    if (!formData.colors.some(c => c._id === color._id)) {
-      setFormData(prev => ({
+    if (!formData.colors.some((c) => c._id === color._id)) {
+      setFormData((prev) => ({
         ...prev,
-        colors: [...prev.colors, { ...color }] // No quantity field
+        colors: [...prev.colors, { ...color }],
       }));
     }
   };
 
   const handleRemoveColor = (colorId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      colors: prev.colors.filter(c => c._id !== colorId)
+      colors: prev.colors.filter((c) => c._id !== colorId),
     }));
   };
 
@@ -202,124 +243,262 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
       const newImage = {
         url: imageInput.url,
         alt: imageInput.alt,
-        isPrimary: formData.images.length === 0
+        isPrimary: formData.images.length === 0,
       };
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, newImage]
+        images: [...prev.images, newImage],
       }));
-      setImageInput({ url: '', alt: '' });
+      setImageInput({ url: "", alt: "" });
     }
   };
 
   const handleRemoveImage = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
   const handleSetPrimaryImage = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       images: prev.images.map((img, i) => ({
         ...img,
-        isPrimary: i === index
-      }))
+        isPrimary: i === index,
+      })),
     }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name) newErrors.name = 'Product name is required';
-    if (!formData.sku) newErrors.sku = 'SKU is required';
-    if (!formData.regularPrice) newErrors.regularPrice = 'Regular price is required';
-    if (!formData.category) newErrors.category = 'Category is required';
-    if (!formData.brand) newErrors.brand = 'Brand is required';
-    
-    if (sizeEnabled && formData.sizes.length === 0) {
-      newErrors.sizes = 'At least one size is required when size management is enabled';
+
+    if (!formData.name) newErrors.name = "Product name is required";
+    if (!formData.sku) newErrors.sku = "SKU is required";
+    if (!formData.regularPrice)
+      newErrors.regularPrice = "Regular price is required";
+
+    // Validate regular price is positive
+    if (formData.regularPrice && parseFloat(formData.regularPrice) < 0) {
+      newErrors.regularPrice = "Regular price must be greater than 0";
     }
-    
-    if (sizeEnabled && formData.sizes.length > 0) {
-      const sizeNames = formData.sizes.map(s => s.name.toLowerCase());
-      const hasDuplicates = sizeNames.some((name, index) => sizeNames.indexOf(name) !== index);
-      if (hasDuplicates) {
-        newErrors.sizes = 'Duplicate size names are not allowed';
+
+    // Validate cost per item is positive or empty
+    if (formData.costPerItem && parseFloat(formData.costPerItem) < 0) {
+      newErrors.costPerItem =
+        "Cost per item must be greater than or equal to 0";
+    }
+
+    // Validate discount price
+    if (formData.discountPrice) {
+      const discount = parseFloat(formData.discountPrice);
+      const regular = parseFloat(formData.regularPrice);
+      if (discount < 0) {
+        newErrors.discountPrice = "Discount price must be greater than 0";
+      } else if (regular && discount >= regular) {
+        newErrors.discountPrice =
+          "Discount price must be less than regular price";
       }
     }
-    
-    if (formData.discountPrice && parseFloat(formData.discountPrice) >= parseFloat(formData.regularPrice)) {
-      newErrors.discountPrice = 'Discount price must be less than regular price';
+
+    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.brand) newErrors.brand = "Brand is required";
+
+    if (sizeEnabled && formData.sizes.length === 0) {
+      newErrors.sizes =
+        "At least one size is required when size management is enabled";
     }
-    
-   
-    
+
+    if (sizeEnabled && formData.sizes.length > 0) {
+      const sizeNames = formData.sizes.map((s) => s.name.toLowerCase());
+      const hasDuplicates = sizeNames.some(
+        (name, index) => sizeNames.indexOf(name) !== index,
+      );
+      if (hasDuplicates) {
+        newErrors.sizes = "Duplicate size names are not allowed";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validateForm()) return;
+
+  // Calculate total quantity from sizes if size management is enabled
+  const totalSizeQuantity = sizeEnabled
+    ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0)
+    : 0;
+
+  // Prepare submit data with proper number handling
+  const submitData = {
+    ...formData,
+    regularPrice: parseFloat(formData.regularPrice) || 0,
+    discountPrice: formData.discountPrice
+      ? parseFloat(formData.discountPrice)
+      : undefined,
+    costPerItem: formData.costPerItem
+      ? parseFloat(formData.costPerItem)
+      : undefined,
+    quantity: sizeEnabled
+      ? totalSizeQuantity
+      : parseInt(formData.quantity) || 0,
+    lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
+    hasSizes: sizeEnabled && formData.sizes.length > 0,
+    sizes: sizeEnabled ? formData.sizes : [],
+    hasColors: colorEnabled && formData.colors.length > 0,
+    colors: colorEnabled ? formData.colors : [],
+  };
+  Object.keys(submitData).forEach((key) => {
+    if (submitData[key] === undefined) {
+      delete submitData[key];
+    }
+  });
+
+  try {
+    let result;
+    if (editingProduct) {
+      result = await updateProduct.mutateAsync({
+        id: editingProduct._id,
+        data: submitData,
+      });
+    } else {
+      result = await createProduct.mutateAsync(submitData);
+    }
+
+    // ✅ Check if result has success property and it's false
+    if (result.success === false) {
+      const errorMessage = result.error || result.message || "Failed to save product";
+      toast.error(errorMessage);
+      return;
+    }
+
+    // ✅ Check if response indicates success (has data or success true)
+    const isSuccess = result.success === true || result.data !== null || result.data !== undefined;
     
-    if (!validateForm()) return;
-    
-    // Calculate total quantity from sizes if size management is enabled
-    const totalSizeQuantity = sizeEnabled ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0) : 0;
-    
-    const submitData = {
-      ...formData,
-      regularPrice: parseFloat(formData.regularPrice),
-      discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null,
-      costPerItem: formData.costPerItem ? parseFloat(formData.costPerItem) : null,
-      quantity: sizeEnabled ? totalSizeQuantity : (parseInt(formData.quantity) || 0),
-      lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
-      hasSizes: sizeEnabled && formData.sizes.length > 0,
-      sizes: sizeEnabled ? formData.sizes : [],
-      hasColors: colorEnabled && formData.colors.length > 0,
-      colors: colorEnabled ? formData.colors : [], 
-    };
-    
-    
-    try {
-      if (editingProduct) {
-        await updateProduct.mutateAsync({
-          id: editingProduct._id,
-          data: submitData
+    if (isSuccess) {
+      // Show success toast
+      toast.success(
+        editingProduct
+          ? "Product updated successfully!"
+          : "Product created successfully!",
+      );
+
+      // Reset form if creating new product
+      if (!editingProduct) {
+        // Reset form data
+        setFormData({
+          name: '',
+          description: '',
+          shortDescription: '',
+          regularPrice: '',
+          discountPrice: '',
+          costPerItem: '',
+          category: '',
+          subcategory: '',
+          brand: '',
+          sku: '',
+          quantity: '',
+          lowStockThreshold: '10',
+          trackInventory: true,
+          allowBackorder: false,
+          hasSizes: false,
+          sizes: [],
+          hasColors: false,
+          colors: [],
+          images: [],
+          status: 'draft',
+          isActive: true,
+          isFeatured: false,
+          isPremium: false,
+          isBest: false,
+          isPublished: false,
+          isFreeShipping: false,
+          variants: [],
         });
-      } else {
-        await createProduct.mutateAsync(submitData);
+        setSizeEnabled(false);
+        setColorEnabled(false);
+        setImageInput({ url: '', alt: '' });
       }
-      
+
       if (onSuccess) onSuccess();
       if (setEditingProduct) setEditingProduct(null);
-    } catch (error) {
-      console.error('Submission error:', error);
+    } else {
+      toast.success(
+        editingProduct
+          ? "Product updated successfully!"
+          : "Product created successfully!",
+      );
+      if (onSuccess) onSuccess();
+      if (setEditingProduct) setEditingProduct(null);
     }
-  };
+  } catch (error) {
 
-  const isLoading = createProduct.isLoading || updateProduct.isLoading;
-  
+    // ✅ Enhanced error handling
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      const status = error.response.status;
+      const data = error.response.data;
+
+      if (status === 400) {
+        const errorMsg = data?.error || data?.message || "Validation error";
+        toast.error(errorMsg);
+      } else if (status === 401) {
+        toast.error("Unauthorized. Please log in again.");
+      } else if (status === 403) {
+        toast.error("You do not have permission to perform this action.");
+      } else if (status === 404) {
+        toast.error("Resource not found.");
+      } else if (status === 409) {
+        toast.error("Conflict: Duplicate or conflicting data.");
+      } else if (status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error(data?.error || data?.message || `Server error (${status})`);
+      }
+    } else if (error.request) {
+      toast.error("No response from server. Please check your connection.");
+    } else if (error.message) {
+      toast.error(error.message);
+    } else {
+      toast.error("Failed to save product. Please try again.");
+    }
+  }
+};
+
+  const isLoading = createProduct.isPending || updateProduct.isPending;
+
   // Calculate total from sizes
-  const totalSizeQuantity = formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0);
+  const totalSizeQuantity = formData.sizes.reduce(
+    (sum, size) => sum + (size.quantity || 0),
+    0,
+  );
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-h-[90vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b z-10">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Package size={24} className="text-blue-600" />
-          {editingProduct ? 'Edit Product' : 'Add New Product'}
+          {editingProduct ? "Edit Product" : "Add New Product"}
         </h2>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+        <button
+          onClick={onCancel}
+          className="text-gray-400 hover:text-gray-600 cursor-pointer"
+        >
           <X size={24} />
         </button>
       </div>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* ================= BASIC INFORMATION ================= */}
         <div className="border-b pb-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Basic Information</h3>
-          
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">
+            Basic Information
+          </h3>
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -334,9 +513,11 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 disabled={isLoading}
                 placeholder="Enter product name"
               />
-              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              {errors.name && (
+                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Description
@@ -351,7 +532,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 placeholder="Enter product description"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Short Description
@@ -372,14 +553,14 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
           </div>
         </div>
-        
+
         {/* ================= PRICING ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <DollarSign size={18} className="text-green-600" />
             Pricing
           </h3>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -391,13 +572,18 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 value={formData.regularPrice}
                 onChange={handleChange}
                 step="0.01"
+                min="0"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
                 placeholder="0.00"
               />
-              {errors.regularPrice && <p className="text-red-500 text-xs mt-1">{errors.regularPrice}</p>}
+              {errors.regularPrice && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.regularPrice}
+                </p>
+              )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Discount Price
@@ -408,12 +594,18 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 value={formData.discountPrice}
                 onChange={handleChange}
                 step="0.01"
+                min="0"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
                 placeholder="0.00"
               />
-              {errors.discountPrice && <p className="text-red-500 text-xs mt-1">{errors.discountPrice}</p>}
+              {errors.discountPrice && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.discountPrice}
+                </p>
+              )}
             </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Cost Per Item
@@ -424,21 +616,27 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 value={formData.costPerItem}
                 onChange={handleChange}
                 step="0.01"
+                min="0"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
                 placeholder="0.00"
               />
+              {errors.costPerItem && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.costPerItem}
+                </p>
+              )}
             </div>
           </div>
         </div>
-        
+
         {/* ================= CATEGORY & BRAND ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Box size={18} className="text-purple-600" />
             Category & Brand
           </h3>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -452,13 +650,17 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 disabled={isLoading}
               >
                 <option value="">Select Category</option>
-                {categories.map(cat => (
-                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
                 ))}
               </select>
-              {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category}</p>}
+              {errors.category && (
+                <p className="text-red-500 text-xs mt-1">{errors.category}</p>
+              )}
             </div>
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Subcategory
@@ -471,12 +673,14 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 disabled={isLoading || !formData.category}
               >
                 <option value="">Select Subcategory</option>
-                {subcategories.map(sub => (
-                  <option key={sub._id} value={sub._id}>{sub.name}</option>
+                {subcategories.map((sub) => (
+                  <option key={sub._id} value={sub._id}>
+                    {sub.name}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Brand <span className="text-red-500">*</span>
@@ -489,22 +693,26 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 disabled={isLoading}
               >
                 <option value="">Select Brand</option>
-                {brands.map(b => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
+                {brands.map((b) => (
+                  <option key={b._id} value={b._id}>
+                    {b.name}
+                  </option>
                 ))}
               </select>
-              {errors.brand && <p className="text-red-500 text-xs mt-1">{errors.brand}</p>}
+              {errors.brand && (
+                <p className="text-red-500 text-xs mt-1">{errors.brand}</p>
+              )}
             </div>
           </div>
         </div>
-        
+
         {/* ================= COLOR MANAGEMENT ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Palette size={18} className="text-pink-600" />
             Color Management
           </h3>
-          
+
           <div className="mb-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -519,43 +727,52 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               </span>
             </label>
             <p className="text-xs text-gray-500 mt-1">
-              Enable this if your product comes in different colors (e.g., Red, Blue, Black)
+              Enable this if your product comes in different colors (e.g., Red,
+              Blue, Black)
             </p>
           </div>
-          
+
           {colorEnabled && (
             <div className="mt-4">
-              {/* Available Colors - No quantity needed */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Available Colors
                 </label>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
-                  {availableColors.filter(color => color.isActive !== false).map((color) => {
-                    const isSelected = formData.colors.some(c => c._id === color._id);
-                    return (
-                      <button
-                        key={color._id}
-                        type="button"
-                        onClick={() => isSelected ? handleRemoveColor(color._id) : handleAddColor(color)}
-                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-pointer ${
-                          isSelected 
-                            ? 'border-pink-500 bg-pink-50' 
-                            : 'border-gray-200 hover:border-pink-300'
-                        }`}
-                      >
-                        <div 
-                          className="w-8 h-8 rounded-full shadow-sm"
-                          style={{ backgroundColor: color.hexCode }}
-                        />
-                        <span className="text-xs text-gray-600">{color.name}</span>
-                      </button>
-                    );
-                  })}
+                  {availableColors
+                    .filter((color) => color.isActive !== false)
+                    .map((color) => {
+                      const isSelected = formData.colors.some(
+                        (c) => c._id === color._id,
+                      );
+                      return (
+                        <button
+                          key={color._id}
+                          type="button"
+                          onClick={() =>
+                            isSelected
+                              ? handleRemoveColor(color._id)
+                              : handleAddColor(color)
+                          }
+                          className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-pink-500 bg-pink-50"
+                              : "border-gray-200 hover:border-pink-300"
+                          }`}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-full shadow-sm"
+                            style={{ backgroundColor: color.hexCode }}
+                          />
+                          <span className="text-xs text-gray-600">
+                            {color.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
-              
-              {/* Selected Colors List - Just display, no quantity input */}
+
               {formData.colors.length > 0 && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -567,11 +784,13 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                         key={color._id}
                         className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
                       >
-                        <div 
+                        <div
                           className="w-6 h-6 rounded-full shadow-sm"
                           style={{ backgroundColor: color.hexCode }}
                         />
-                        <span className="text-sm text-gray-800">{color.name}</span>
+                        <span className="text-sm text-gray-800">
+                          {color.name}
+                        </span>
                         <button
                           type="button"
                           onClick={() => handleRemoveColor(color._id)}
@@ -582,22 +801,30 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                       </div>
                     ))}
                   </div>
-                  
-                  {/* Color Summary */}
+
                   <div className="mt-3 p-3 bg-pink-50 rounded-lg border border-pink-200">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="text-sm font-medium text-pink-800">Color Selection Summary</p>
+                        <p className="text-sm font-medium text-pink-800">
+                          Color Selection Summary
+                        </p>
                         <p className="text-xs text-pink-600 mt-1">
-                          Selected {formData.colors.length} color{formData.colors.length !== 1 ? 's' : ''}
+                          Selected {formData.colors.length} color
+                          {formData.colors.length !== 1 ? "s" : ""}
                         </p>
                       </div>
                       <Palette size={20} className="text-pink-500" />
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {formData.colors.map(color => (
-                        <span key={color._id} className="text-xs bg-white px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color.hexCode }} />
+                      {formData.colors.map((color) => (
+                        <span
+                          key={color._id}
+                          className="text-xs bg-white px-2 py-1 rounded-full shadow-sm flex items-center gap-1"
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: color.hexCode }}
+                          />
                           {color.name}
                         </span>
                       ))}
@@ -605,21 +832,21 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                   </div>
                 </div>
               )}
-              
+
               {errors.colors && (
                 <p className="text-red-500 text-xs mt-2">{errors.colors}</p>
               )}
             </div>
           )}
         </div>
-        
+
         {/* ================= SIZE MANAGEMENT ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Ruler size={18} className="text-indigo-600" />
             Size Management
           </h3>
-          
+
           <div className="mb-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -634,10 +861,11 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               </span>
             </label>
             <p className="text-xs text-gray-500 mt-1">
-              Enable this if your product comes in different sizes (e.g., S, M, L, XL)
+              Enable this if your product comes in different sizes (e.g., S, M,
+              L, XL)
             </p>
           </div>
-          
+
           {sizeEnabled && (
             <div className="mt-4">
               <ProductSizeManager
@@ -648,22 +876,27 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               {errors.sizes && (
                 <p className="text-red-500 text-xs mt-2">{errors.sizes}</p>
               )}
-              
-              {/* Size Summary */}
+
               {formData.sizes.length > 0 && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-blue-800">Size Inventory Summary</p>
+                      <p className="text-sm font-medium text-blue-800">
+                        Size Inventory Summary
+                      </p>
                       <p className="text-xs text-blue-600 mt-1">
-                        Total units across all sizes: <strong>{totalSizeQuantity}</strong>
+                        Total units across all sizes:{" "}
+                        <strong>{totalSizeQuantity}</strong>
                       </p>
                     </div>
                     <Shirt size={20} className="text-blue-500" />
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.sizes.map(size => (
-                      <span key={size.name} className="text-xs bg-white px-2 py-1 rounded-full shadow-sm">
+                    {formData.sizes.map((size) => (
+                      <span
+                        key={size.name}
+                        className="text-xs bg-white px-2 py-1 rounded-full shadow-sm"
+                      >
                         {size.name}: {size.quantity} units
                         {size.extraPrice > 0 && ` (+৳${size.extraPrice})`}
                       </span>
@@ -674,14 +907,14 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
           )}
         </div>
-        
+
         {/* ================= INVENTORY ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Package size={18} className="text-orange-600" />
             Inventory
           </h3>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -696,9 +929,11 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 disabled={isLoading}
                 placeholder="Unique product code"
               />
-              {errors.sku && <p className="text-red-500 text-xs mt-1">{errors.sku}</p>}
+              {errors.sku && (
+                <p className="text-red-500 text-xs mt-1">{errors.sku}</p>
+              )}
             </div>
-            
+
             {!sizeEnabled && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -709,13 +944,14 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                   name="quantity"
                   value={formData.quantity}
                   onChange={handleChange}
+                  min="0"
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   disabled={isLoading}
                   placeholder="0"
                 />
               </div>
             )}
-            
+
             {sizeEnabled && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -732,7 +968,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 </p>
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Low Stock Threshold
@@ -742,12 +978,13 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 name="lowStockThreshold"
                 value={formData.lowStockThreshold}
                 onChange={handleChange}
+                min="0"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
                 placeholder="10"
               />
             </div>
-            
+
             <div className="col-span-2 space-y-2">
               <label className="flex items-center gap-3">
                 <input
@@ -759,7 +996,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 />
                 <span className="text-sm text-gray-700">Track Inventory</span>
               </label>
-              
+
               <label className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -773,28 +1010,32 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
           </div>
         </div>
-        
+
         {/* ================= IMAGES ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Image size={18} className="text-pink-600" />
             Product Images
           </h3>
-          
+
           <div className="mb-4">
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
                 placeholder="Image URL"
                 value={imageInput.url}
-                onChange={(e) => setImageInput({ ...imageInput, url: e.target.value })}
+                onChange={(e) =>
+                  setImageInput({ ...imageInput, url: e.target.value })
+                }
                 className="flex-1 px-4 py-2 border rounded-lg"
               />
               <input
                 type="text"
                 placeholder="Alt text"
                 value={imageInput.alt}
-                onChange={(e) => setImageInput({ ...imageInput, alt: e.target.value })}
+                onChange={(e) =>
+                  setImageInput({ ...imageInput, alt: e.target.value })
+                }
                 className="flex-1 px-4 py-2 border rounded-lg"
               />
               <button
@@ -805,20 +1046,26 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 Add
               </button>
             </div>
-            <p className="text-xs text-gray-500">Add product images (first image will be primary by default)</p>
+            <p className="text-xs text-gray-500">
+              Add product images (first image will be primary by default)
+            </p>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4">
             {formData.images.map((img, idx) => (
               <div key={idx} className="relative border rounded-lg p-2">
-                <img src={img.url} alt={img.alt} className="h-24 w-full object-cover rounded" />
+                <img
+                  src={img.url}
+                  alt={img.alt}
+                  className="h-24 w-full object-cover rounded"
+                />
                 <div className="mt-2 flex justify-between items-center">
                   <button
                     type="button"
                     onClick={() => handleSetPrimaryImage(idx)}
-                    className={`text-xs px-2 py-1 rounded cursor-pointer ${img.isPrimary ? 'bg-green-500 text-white' : 'bg-gray-200'}`}
+                    className={`text-xs px-2 py-1 rounded cursor-pointer ${img.isPrimary ? "bg-green-500 text-white" : "bg-gray-200"}`}
                   >
-                    {img.isPrimary ? 'Primary' : 'Set Primary'}
+                    {img.isPrimary ? "Primary" : "Set Primary"}
                   </button>
                   <button
                     type="button"
@@ -832,14 +1079,14 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             ))}
           </div>
         </div>
-        
+
         {/* ================= SHIPPING ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Truck size={18} className="text-teal-600" />
             Shipping
           </h3>
-          
+
           <div>
             <label className="flex items-center gap-3">
               <input
@@ -852,14 +1099,14 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </label>
           </div>
         </div>
-        
+
         {/* ================= STATUS & VISIBILITY ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Star size={18} className="text-yellow-600" />
             Status & Visibility
           </h3>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -878,7 +1125,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               </select>
             </div>
           </div>
-          
+
           <div className="mt-4 space-y-3">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -890,7 +1137,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               />
               <span className="text-sm text-gray-700">Active Product</span>
             </label>
-            
+
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -899,12 +1146,16 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                 onChange={handleChange}
                 className="w-4 h-4 text-blue-600 rounded"
               />
-              <span className="text-sm text-gray-700">Published (Visible on Store)</span>
+              <span className="text-sm text-gray-700">
+                Published (Visible on Store)
+              </span>
             </label>
-            
+
             <div className="border-t pt-3 mt-2">
-              <p className="text-sm font-medium text-gray-700 mb-2">Product Badges & Labels</p>
-              
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Product Badges & Labels
+              </p>
+
               <label className="flex items-center gap-3 cursor-pointer mb-2">
                 <input
                   type="checkbox"
@@ -918,7 +1169,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                   Featured Product (Shows in featured sections)
                 </span>
               </label>
-              
+
               <label className="flex items-center gap-3 cursor-pointer mb-2">
                 <input
                   type="checkbox"
@@ -932,7 +1183,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
                   Premium Product (High-end/Luxury items)
                 </span>
               </label>
-              
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -949,7 +1200,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
           </div>
         </div>
-        
+
         {/* ================= SUBMIT BUTTON ================= */}
         <div className="sticky bottom-0 bg-white pt-4 border-t">
           <button
@@ -960,12 +1211,12 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 className="animate-spin" size={18} />
-                {editingProduct ? 'Updating Product...' : 'Creating Product...'}
+                {editingProduct ? "Updating Product..." : "Creating Product..."}
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
                 <Plus size={18} />
-                {editingProduct ? 'Update Product' : 'Create Product'}
+                {editingProduct ? "Update Product" : "Create Product"}
               </span>
             )}
           </button>

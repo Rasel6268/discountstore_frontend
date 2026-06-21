@@ -4,37 +4,42 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { productApi } from "@/services/productApi";
 
+// ================== HELPERS ==================
+
+const getErrorMessage = (err) =>
+  err?.response?.data?.error || err?.message || "Something went wrong";
+
 // ================== QUERIES ==================
 
 // 🔹 Get all products with filters
 export const useProducts = (filters = {}) => {
-  // Remove undefined or empty values from filters
   const cleanFilters = Object.fromEntries(
-    Object.entries(filters).filter(([_, value]) => 
-      value !== undefined && value !== null && value !== ''
+    Object.entries(filters).filter(
+      ([_, value]) => value !== undefined && value !== null && value !== ""
     )
   );
 
   return useQuery({
-    queryKey: ["products", cleanFilters],
+    queryKey: ["products", JSON.stringify(cleanFilters)],
     queryFn: async () => {
       const res = await productApi.getAllProducts(cleanFilters);
-      // Handle different response structures
-      if (res.data && res.pagination) {
-        return {
-          data: res.data,
-          pagination: res.pagination,
-          success: res.success
-        };
-      }
+
       return {
-        data: res.data || [],
-        pagination: res.pagination || { total: 0, page: 1, limit: 12, pages: 1 },
-        success: res.success
+        data: res?.data || [],
+        pagination: res?.pagination || {
+          total: 0,
+          page: 1,
+          limit: 12,
+          pages: 1,
+        },
+        success: res?.success ?? true,
       };
     },
-    keepPreviousData: true,
-    staleTime: 5000,
+    staleTime: 1000 * 30, // 30 sec
+    gcTime: 1000 * 60 * 5, // 5 min cache
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: true,
+    retry: 1,
   });
 };
 
@@ -44,9 +49,10 @@ export const useProduct = (id) => {
     queryKey: ["product", id],
     queryFn: async () => {
       const res = await productApi.getProductById(id);
-      return res.data;
+      return res?.data || null;
     },
     enabled: !!id,
+    staleTime: 1000 * 60,
   });
 };
 
@@ -56,9 +62,10 @@ export const useProductColors = (productId) => {
     queryKey: ["product-colors", productId],
     queryFn: async () => {
       const res = await productApi.getProductColors(productId);
-      return res.data;
+      return res?.data || [];
     },
     enabled: !!productId,
+    staleTime: 1000 * 30,
   });
 };
 
@@ -68,9 +75,10 @@ export const useProductSizes = (productId) => {
     queryKey: ["product-sizes", productId],
     queryFn: async () => {
       const res = await productApi.getProductSizes(productId);
-      return res.data;
+      return res?.data || [];
     },
     enabled: !!productId,
+    staleTime: 1000 * 30,
   });
 };
 
@@ -83,15 +91,9 @@ export const useCreateProduct = () => {
   return useMutation({
     mutationFn: productApi.createProduct,
 
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(res.message || res.data?.message || "Product created successfully!");
-    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
 
-    onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to create product"
-      );
     },
   });
 };
@@ -103,19 +105,21 @@ export const useUpdateProduct = () => {
   return useMutation({
     mutationFn: ({ id, data }) => productApi.updateProduct(id, data),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["product", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["product-colors", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["product-sizes", variables.id] });
-      
-      toast.success(res.message || res.data?.message || "Product updated successfully!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-colors", variables.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-sizes", variables.id],
+      });
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Update failed"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
@@ -127,41 +131,36 @@ export const useDeleteProduct = () => {
   return useMutation({
     mutationFn: productApi.deleteProduct,
 
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast.success(res.message || res.data?.message || "Product deleted successfully!");
-    },
-
-    onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Delete failed"
-      );
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 };
 
 // ================== COLOR MUTATIONS ==================
 
-// 🔹 Add color to product
+// 🔹 Add color
 export const useAddColorToProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, colorData }) => 
+    mutationFn: ({ productId, colorData }) =>
       productApi.addColorToProduct(productId, colorData),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-colors", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Color added successfully!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.productId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-colors", variables.productId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Color added successfully!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to add color"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
@@ -171,71 +170,77 @@ export const useUpdateColorQuantity = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, colorId, quantity }) => 
+    mutationFn: ({ productId, colorId, quantity }) =>
       productApi.updateColorQuantity(productId, colorId, quantity),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-colors", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Color quantity updated!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.productId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-colors", variables.productId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Color quantity updated!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to update color quantity"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
 
-// 🔹 Remove color from product
+// 🔹 Remove color
 export const useRemoveColorFromProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, colorId }) => 
+    mutationFn: ({ productId, colorId }) =>
       productApi.removeColorFromProduct(productId, colorId),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-colors", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Color removed successfully!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.productId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-colors", variables.productId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Color removed successfully!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to remove color"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
 
 // ================== SIZE MUTATIONS ==================
 
-// 🔹 Add size to product
+// 🔹 Add size
 export const useAddSizeToProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, sizeData }) => 
+    mutationFn: ({ productId, sizeData }) =>
       productApi.addSizeToProduct(productId, sizeData),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-sizes", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Size added successfully!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.productId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-sizes", variables.productId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Size added successfully!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to add size"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
@@ -245,45 +250,49 @@ export const useUpdateSizeQuantity = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, sizeName, quantity }) => 
+    mutationFn: ({ productId, sizeName, quantity }) =>
       productApi.updateSizeQuantity(productId, sizeName, quantity),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-sizes", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Size quantity updated!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.productId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-sizes", variables.productId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Size quantity updated!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to update size quantity"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
 
-// 🔹 Remove size from product
+// 🔹 Remove size
 export const useRemoveSizeFromProduct = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ productId, sizeName }) => 
+    mutationFn: ({ productId, sizeName }) =>
       productApi.removeSizeFromProduct(productId, sizeName),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["product-sizes", variables.productId] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Size removed successfully!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.productId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["product-sizes", variables.productId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Size removed successfully!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to remove size"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };
@@ -293,20 +302,20 @@ export const useUpdateStock = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, quantity, operation = 'set' }) => 
+    mutationFn: ({ id, quantity, operation = "set" }) =>
       productApi.updateStock(id, quantity, operation),
 
-    onSuccess: (res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["product", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      
-      toast.success(res.message || "Stock updated successfully!");
+    onSuccess: async (res, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["product", variables.id],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success(res?.message || "Stock updated successfully!");
     },
 
     onError: (err) => {
-      toast.error(
-        err?.response?.data?.error || err?.message || "Failed to update stock"
-      );
+      toast.error(getErrorMessage(err));
     },
   });
 };

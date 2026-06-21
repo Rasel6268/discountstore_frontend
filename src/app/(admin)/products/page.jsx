@@ -62,19 +62,29 @@ const ProductsPage = () => {
     error, 
     refetch, 
     isRefetching,
-    isFetching
+    isFetching,
+    isError
   } = useProducts({
     ...filters,
     sortBy: sortField,
     sortOrder: sortOrder
   });
   
-  const { data: categories = [] } = useCategories();
-  const { data: brands = [] } = useBrands();
+  const { data: categoriesData = [] } = useCategories();
+  const { data: brandsData = [] } = useBrands();
   const deleteProduct = useDeleteProduct();
   
-  const products = data?.data || [];
-  const pagination = data?.pagination || { total: 0, page: 1, limit: 10, pages: 1 };
+  // ✅ Safely extract data with fallbacks
+  const products = data?.data || data?.products || [];
+  const pagination = data?.pagination || data?.meta || { 
+    total: products.length, 
+    page: 1, 
+    limit: 10, 
+    pages: Math.ceil(products.length / 10) || 1 
+  };
+  
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const brands = Array.isArray(brandsData) ? brandsData : [];
 
   // Handle filter changes with debounce
   const handleFilterChange = useCallback((key, value) => {
@@ -113,19 +123,8 @@ const ProductsPage = () => {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      // Invalidate the query to force refetch
-      await queryClient.invalidateQueries({ 
-        queryKey: ['products'] 
-      });
-      
-      // Also invalidate specific query with filters
-      await queryClient.invalidateQueries({ 
-        queryKey: ['products', { ...filters, sortBy: sortField, sortOrder: sortOrder }] 
-      });
-      
-      // Force refetch
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
       await refetch();
-      
       toast.success('Products refreshed successfully');
     } catch (error) {
       console.error('Refresh error:', error);
@@ -133,16 +132,7 @@ const ProductsPage = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [queryClient, filters, sortField, sortOrder, refetch]);
-
-  // Auto-refetch when filters change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      refetch();
-    }, 300); // Debounce
-
-    return () => clearTimeout(timer);
-  }, [filters, sortField, sortOrder, refetch]);
+  }, [queryClient, refetch]);
 
   // Handle delete with proper cache invalidation
   const handleDelete = useCallback(async (id, name) => {
@@ -161,15 +151,12 @@ const ProductsPage = () => {
               toast.dismiss(t.id);
               try {
                 await deleteProduct.mutateAsync(id);
-                // Invalidate the query to refetch
-                await queryClient.invalidateQueries({ 
-                  queryKey: ['products'] 
-                });
+                await queryClient.invalidateQueries({ queryKey: ['products'] });
                 await refetch();
                 toast.success('Product deleted successfully');
               } catch (error) {
                 console.error('Delete error:', error);
-                toast.error('Failed to delete product');
+                toast.error(error?.response?.data?.error || 'Failed to delete product');
               }
             }}
             className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 cursor-pointer"
@@ -208,6 +195,7 @@ const ProductsPage = () => {
   }, []);
 
   const formatPrice = useCallback((price) => {
+    if (price === undefined || price === null) return '$0.00';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
@@ -219,7 +207,6 @@ const ProductsPage = () => {
     return sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   }, [sortField, sortOrder]);
 
-  // Helper function to render product badges
   const renderProductBadges = useCallback((product) => {
     const badges = [];
     
@@ -253,15 +240,15 @@ const ProductsPage = () => {
     return badges;
   }, []);
 
-  // Handle product form success
   const handleProductFormSuccess = useCallback(async () => {
     closeModal();
-    await queryClient.invalidateQueries({ 
-      queryKey: ['products'] 
-    });
+    await queryClient.invalidateQueries({ queryKey: ['products'] });
     await refetch();
     toast.success('Product saved successfully');
   }, [closeModal, queryClient, refetch]);
+
+  // ✅ Determine if we're loading
+  const isLoadingData = isLoading || isFetching || isRefetching || isRefreshing;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -282,10 +269,10 @@ const ProductsPage = () => {
             <div className="flex gap-3">
               <button
                 onClick={handleRefresh}
-                disabled={isRefreshing || isRefetching || isFetching}
+                disabled={isLoadingData}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {(isRefreshing || isRefetching || isFetching) ? (
+                {isLoadingData ? (
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
                   <RefreshCw size={18} />
@@ -453,14 +440,15 @@ const ProductsPage = () => {
 
         {/* Products Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {isLoading ? (
+          {isLoadingData && !products.length ? (
             <div className="flex justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
             </div>
-          ) : error ? (
+          ) : isError ? (
             <div className="text-center py-12">
               <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
               <p className="text-red-600 mb-4">Failed to load products</p>
+              <p className="text-gray-500 text-sm mb-4">{error?.message || 'An error occurred'}</p>
               <button
                 onClick={handleRefresh}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 cursor-pointer"
@@ -474,7 +462,10 @@ const ProductsPage = () => {
               <p className="text-gray-500 text-lg mb-2">No products found</p>
               <p className="text-gray-400 mb-4">Get started by adding your first product</p>
               <button
-                onClick={() => setShowProductForm(true)}
+                onClick={() => {
+                  setEditingProduct(null);
+                  setShowProductForm(true);
+                }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2 cursor-pointer"
               >
                 <Plus size={18} />
@@ -573,7 +564,7 @@ const ProductsPage = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`text-sm font-medium ${product.quantity <= (product.lowStockThreshold || 10) ? 'text-red-600' : 'text-green-600'}`}>
-                            {product.quantity}
+                            {product.quantity || 0}
                           </span>
                           {product.quantity <= (product.lowStockThreshold || 10) && product.quantity > 0 && (
                             <p className="text-xs text-red-500">Low stock</p>
@@ -594,7 +585,7 @@ const ProductsPage = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm text-gray-500">
-                            {new Date(product.createdAt).toLocaleDateString()}
+                            {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : '-'}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -732,7 +723,7 @@ const ProductsPage = () => {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Slug</label>
-                  <p className="font-medium">{selectedProduct.slug}</p>
+                  <p className="font-medium">{selectedProduct.slug || '-'}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Status</label>
@@ -763,7 +754,7 @@ const ProductsPage = () => {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Quantity</label>
-                  <p className="font-medium">{selectedProduct.quantity}</p>
+                  <p className="font-medium">{selectedProduct.quantity || 0}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Free Shipping</label>
@@ -771,10 +762,12 @@ const ProductsPage = () => {
                 </div>
               </div>
               
-              <div>
-                <label className="text-sm text-gray-500">Description</label>
-                <p className="mt-1 text-gray-700">{selectedProduct.description}</p>
-              </div>
+              {selectedProduct.description && (
+                <div>
+                  <label className="text-sm text-gray-500">Description</label>
+                  <p className="mt-1 text-gray-700">{selectedProduct.description}</p>
+                </div>
+              )}
               
               <div className="flex gap-3 pt-4">
                 <button
