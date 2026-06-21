@@ -30,7 +30,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTheme } from "@/AuthProvider/ThemeContext";
 
-
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openUserModel, setOpenUserModel] = useState(false);
@@ -74,7 +73,7 @@ const Navbar = () => {
 
   // Get cart count (total items including quantities)
   const cartCount = mounted ? getTotalItems() : 0;
-  
+
   // Get wishlist count
   const wishlistCount = mounted ? getWishlistCount() : 0;
 
@@ -83,6 +82,7 @@ const Navbar = () => {
     setIsLoggingOut(true);
     try {
       const result = await logout();
+      console.log(result)
       if (result.status === 200) {
         setIsLoggingOut(false);
         toast.success("Logged out successfully");
@@ -96,16 +96,6 @@ const Navbar = () => {
       setIsLoggingOut(false);
     }
   };
-
-  // Categories data
-  const categories = [
-    { name: "Men's Shoes", href: "/category/men-shoes", count: 45 },
-    { name: "Women's Shoes", href: "/category/women-shoes", count: 52 },
-    { name: "Men's Bags", href: "/category/men-bags", count: 28 },
-    { name: "Women's Bags", href: "/category/women-bags", count: 36 },
-    { name: "Accessories", href: "/category/accessories", count: 19 },
-    { name: "Sale", href: "/category/sale", count: 12 },
-  ];
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-blue-950 shadow-2xl transition-colors duration-300">
@@ -213,15 +203,13 @@ const Navbar = () => {
 
       <div className="w-11/12 mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div>
-            <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              discountstorebd
-            </span>
-            <p className="text-[10px] text-amber-500 hidden sm:block">
-              Premium Leather & Fusion
-            </p>
-          </div>
+        <Link href="/" className="flex items-center gap-2">
+          <img
+            src="https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781946003/ChatGPT_Image_Jun_20_2026_02_38_14_PM_sqijgu.png"
+            alt="Discount Store"
+            className="h-15 w-auto object-contain"
+            style={{ maxHeight: "60px" }}
+          />
         </Link>
 
         {/* Desktop Menu */}
@@ -256,41 +244,15 @@ const Navbar = () => {
               aria-label="Toggle theme"
             >
               <div className="relative w-5 h-5">
-                <FaSun className={`absolute inset-0 text-yellow-500 transition-all duration-300 ${theme === 'dark' ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'}`} />
-                <FaMoon className={`absolute inset-0 text-gray-700 dark:text-gray-300 transition-all duration-300 ${theme === 'light' ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'}`} />
+                <FaSun
+                  className={`absolute inset-0 text-yellow-500 transition-all duration-300 ${theme === "dark" ? "opacity-100 rotate-0" : "opacity-0 rotate-90"}`}
+                />
+                <FaMoon
+                  className={`absolute inset-0 text-gray-700 dark:text-gray-300 transition-all duration-300 ${theme === "light" ? "opacity-100 rotate-0" : "opacity-0 -rotate-90"}`}
+                />
               </div>
             </button>
           )}
-
-          {/* Wishlist */}
-          <Link href="/wishlist" className="relative group">
-            {mounted && wishlistCount > 0 ? (
-              <FaHeart className="text-xl text-red-500 group-hover:text-red-600 transition-colors duration-300" />
-            ) : (
-              <FaRegHeart className="text-xl text-gray-700 dark:text-gray-300 group-hover:text-red-500 transition-colors duration-300" />
-            )}
-            {mounted && wishlistCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
-                {wishlistCount > 9 ? "9+" : wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          {/* Cart */}
-          <Link href="/cart" className="relative group">
-            <AiOutlineShoppingCart className="text-xl text-gray-700 dark:text-gray-300 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors duration-300" />
-            {mounted && cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg animate-bounce">
-                {cartCount > 9 ? "9+" : cartCount}
-              </span>
-            )}
-            {mounted && cartCount === 0 && (
-              <span className="absolute -top-2 -right-2 bg-gray-400 dark:bg-gray-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg">
-                0
-              </span>
-            )}
-          </Link>
-
           {/* User Auth Desktop */}
           {user ? (
             <div ref={userModelRef} className="relative hidden lg:block">
@@ -299,7 +261,9 @@ const Navbar = () => {
                 className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500 hover:border-amber-400 transition-all duration-300 hover:scale-105"
               >
                 <img
-                  src={user.avatar || "/user-avatar.jpg"}
+                  src={
+                    "https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781938843/istockphoto-588258370-612x612_nebeq7.png"
+                  }
                   alt="User Avatar"
                   className="w-full h-full object-cover"
                 />
@@ -309,7 +273,9 @@ const Navbar = () => {
                 <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 shadow-2xl rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="bg-linear-to-r from-amber-50 to-white dark:from-amber-900/50 dark:to-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
                     <img
-                      src={user.avatar || "/user-avatar.jpg"}
+                      src={
+                        "https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781938843/istockphoto-588258370-612x612_nebeq7.png"
+                      }
                       alt="User Avatar"
                       className="w-12 h-12 rounded-full object-cover border-2 border-amber-500 shadow-sm"
                     />
@@ -323,15 +289,24 @@ const Navbar = () => {
                     </div>
                   </div>
                   <div className="py-2">
-                    <Link
-                      href="/profile"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                      onClick={() => setOpenUserModel(false)}
-                    >
-                      <User className="w-5 h-5" />
-                      My Profile
-                    </Link>
-                    
+                    {user.role === "admin" ? (
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+                        onClick={toggleMobileMenu}
+                      >
+                        <User className="w-4 h-4" /> Dashboard
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+                        onClick={toggleMobileMenu}
+                      >
+                        <User className="w-4 h-4" /> My Profile
+                      </Link>
+                    )}
+
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
@@ -429,35 +404,12 @@ const Navbar = () => {
             >
               <House className="w-4 h-4" /> Home
             </Link>
-
-            {/* Categories Section */}
-            <div className="px-4 py-2">
-              <h3 className="text-amber-600 dark:text-amber-400 text-sm font-semibold mb-2">
-                Categories
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map((category) => (
-                  <Link
-                    key={category.name}
-                    href={category.href}
-                    className="flex justify-between items-center px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition text-sm"
-                    onClick={toggleMobileMenu}
-                  >
-                    <span>{category.name}</span>
-                    <span className="text-xs text-amber-600 dark:text-amber-500">
-                      {category.count}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
             <Link
               href="/shop"
               className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
-              <ShoppingBag className="w-4 h-4" /> All Products
+              <ShoppingBag className="w-4 h-4" /> Shop
             </Link>
 
             <Link
@@ -467,30 +419,13 @@ const Navbar = () => {
             >
               <FcAbout className="w-4 h-4" /> About
             </Link>
-
-            {/* Cart in Mobile Menu */}
-            <Link
-              href="/cart"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-              onClick={toggleMobileMenu}
-            >
-              <div className="flex items-center gap-3">
-                <AiOutlineShoppingCart className="w-4 h-4" />
-                Cart
-              </div>
-              {mounted && cartCount > 0 && (
-                <span className="bg-amber-500 text-white text-xs px-2 py-1 rounded-full">
-                  {cartCount} {cartCount === 1 ? "item" : "items"}
-                </span>
-              )}
-            </Link>
-
-
             {user ? (
               <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2 flex flex-col gap-2">
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-700/50 rounded-xl">
                   <img
-                    src={user.avatar || "/user-avatar.jpg"}
+                    src={
+                      "https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781938843/istockphoto-588258370-612x612_nebeq7.png"
+                    }
                     alt="User Avatar"
                     className="w-10 h-10 rounded-full object-cover border-2 border-amber-500"
                   />
@@ -503,13 +438,23 @@ const Navbar = () => {
                     </p>
                   </div>
                 </div>
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                  onClick={toggleMobileMenu}
-                >
-                  <User className="w-4 h-4" /> My Profile
-                </Link>
+                {user.role === "admin" ? (
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+                    onClick={toggleMobileMenu}
+                  >
+                    <User className="w-4 h-4" /> Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+                    onClick={toggleMobileMenu}
+                  >
+                    <User className="w-4 h-4" /> My Profile
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}

@@ -17,8 +17,6 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     // Pricing
     regularPrice: '',
     discountPrice: '',
-    discountStartDate: '',
-    discountEndDate: '',
     costPerItem: '',
     
     // Categories
@@ -97,8 +95,6 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
         shortDescription: editingProduct.shortDescription || '',
         regularPrice: editingProduct.regularPrice || '',
         discountPrice: editingProduct.discountPrice || '',
-        discountStartDate: editingProduct.discountStartDate ? editingProduct.discountStartDate.split('T')[0] : '',
-        discountEndDate: editingProduct.discountEndDate ? editingProduct.discountEndDate.split('T')[0] : '',
         costPerItem: editingProduct.costPerItem || '',
         category: editingProduct.category?._id || editingProduct.category || '',
         subcategory: editingProduct.subcategory?._id || editingProduct.subcategory || '',
@@ -257,9 +253,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
       newErrors.discountPrice = 'Discount price must be less than regular price';
     }
     
-    if (formData.discountStartDate && formData.discountEndDate && formData.discountStartDate > formData.discountEndDate) {
-      newErrors.discountEndDate = 'End date must be after start date';
-    }
+   
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -420,38 +414,6 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               />
               {errors.discountPrice && <p className="text-red-500 text-xs mt-1">{errors.discountPrice}</p>}
             </div>
-            
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 items-center gap-1">
-                <Calendar size={14} />
-                Discount Start Date
-              </label>
-              <input
-                type="date"
-                name="discountStartDate"
-                value={formData.discountStartDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 items-center gap-1">
-                <Calendar size={14} />
-                Discount End Date
-              </label>
-              <input
-                type="date"
-                name="discountEndDate"
-                value={formData.discountEndDate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                disabled={isLoading}
-              />
-              {errors.discountEndDate && <p className="text-red-500 text-xs mt-1">{errors.discountEndDate}</p>}
-            </div>
-            
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Cost Per Item

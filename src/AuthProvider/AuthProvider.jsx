@@ -27,8 +27,6 @@ const AuthProvider = ({ children }) => {
   const checkUser = async () => {
     try {
       const res = await api.get("/auth/me");
-      console.log("User data:", res);
-
       if (res.status === 200) {
         const data = await res.data.user;
         setUser(data);
@@ -40,53 +38,103 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
-    
-    setLoading(true);
-    try {
-     const result = await api.post("/auth/register", { name, email, password });
-     
-      return result.data;
-    } catch (error) {
-      console.error("Registration error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const login = async (email, password) => {
-    setLoading(true);
-    try {
-      const res = await api.post("/auth/login", { email, password });
-      setUser(res.data.user);
-      console.log(res);
-      if (res.data.user.role === "admin") {
-        router.push("/dashboard");
-      } else {
-        router.push("/profile");
-      }
+ const register = async (name, email, password) => {
+  setLoading(true);
 
-      toast.success(`Welcome back, ${res.data.user.name}!`);
-      return { success: true, user: res.data.user };
-    } catch (error) {
-      console.error("Login error:", error);
-      const message = error.response?.data?.error || "Login failed";
-      toast.error(message);
-      return { success: false, error: message };
-    } finally {
-      setLoading(false);
+  try {
+    const response = await api.post("/auth/register", {
+      name,
+      email,
+      password,
+    });
+
+    return response.data;
+  } catch (error) {
+
+    return (
+      error.response?.data || {
+        success: false,
+        message: "Registration failed",
+      }
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+  const login = async (email, password) => {
+  setLoading(true);
+
+  try {
+    const res = await api.post("/auth/login", {
+      email,
+      password,
+    });
+
+    const userData = res.data.user;
+
+    setUser(userData);
+
+    toast.success(`Welcome back, ${userData.name}!`);
+
+    if (userData.role === "admin") {
+      router.push("/dashboard");
+    } else {
+      router.push("/profile");
     }
-  };
-  const logout = async () => {
-    try {
-      setLoading(true);
-    const result = await api.post("/auth/logout");
-    return result.data;
-    } catch (error) {
-      toast.error("Failed to log out");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+    return {
+      success: true,
+      user: userData,
+    };
+  } catch (error) {
+    console.error("Login error:", error);
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Login failed";
+
+    toast.error(message);
+
+    return {
+      success: false,
+      error: message,
+    };
+  } finally {
+    setLoading(false);
+  }
+};
+
+const logout = async () => {
+  setLoading(true);
+
+  try {
+    const res = await api.post("/auth/logout");
+
+    setUser(null);
+
+    toast.success("Logged out successfully");
+
+    router.push("/auth/login");
+
+    return {
+      success: true,
+      message: res.data.message,
+    };
+  } catch (error) {
+    const message =
+      error.response?.data?.message || "Failed to log out";
+
+    toast.error(message);
+
+    return {
+      success: false,
+      error: message,
+    };
+  } finally {
+    setLoading(false);
+  }
+};
   const forgotPassword = async (email) => {};
   const resetPassword = async (token, password) => {};
   const authData = {

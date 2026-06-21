@@ -12,6 +12,8 @@ import {
   FaFire,
   FaShoppingCart,
   FaTags,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,6 +31,7 @@ const Home = () => {
   const { user, loading } = useAuth();
   const { items, addToCart } = useCart();
 
+  // Fetch products
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -37,12 +40,106 @@ const Home = () => {
     },
   });
 
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await api.get("/categories");
+      return res.data;
+    },
+  });
+
+  // Fetch active discount offers
+  const { data: discounts, isLoading: discountsLoading } = useQuery({
+    queryKey: ["active-discounts"],
+    queryFn: async () => {
+      const res = await api.get("/discounts/active");
+      return res.data.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Discount Slider State
+  const [currentDiscountIndex, setCurrentDiscountIndex] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState({});
+
+  // Auto-slide discounts
+  useEffect(() => {
+    if (!discounts || discounts.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentDiscountIndex((prev) =>
+        prev === discounts.length - 1 ? 0 : prev + 1,
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [discounts]);
+
+  // Calculate time remaining for each discount
+  useEffect(() => {
+    if (!discounts) return;
+
+    const calculateTimeRemaining = () => {
+      const now = new Date();
+      const newTimeRemaining = {};
+
+      discounts.forEach((discount, index) => {
+        const end = new Date(discount.endDate);
+        const diff = end - now;
+
+        if (diff > 0) {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor(
+            (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+          );
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+          newTimeRemaining[index] = { days, hours, minutes, seconds };
+        } else {
+          newTimeRemaining[index] = {
+            days: 0,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+          };
+        }
+      });
+
+      setTimeRemaining(newTimeRemaining);
+    };
+
+    calculateTimeRemaining();
+    const timer = setInterval(calculateTimeRemaining, 1000);
+
+    return () => clearInterval(timer);
+  }, [discounts]);
+
+  const handlePrevDiscount = () => {
+    setCurrentDiscountIndex((prev) =>
+      prev === 0 ? discounts.length - 1 : prev - 1,
+    );
+  };
+
+  const handleNextDiscount = () => {
+    setCurrentDiscountIndex((prev) =>
+      prev === discounts.length - 1 ? 0 : prev + 1,
+    );
+  };
+
+  const goToDiscount = (index) => {
+    setCurrentDiscountIndex(index);
+  };
+
+  // Filter products
   const bestProducts = products?.filter((item) => item.isBest === true);
   const discountedProducts = products?.filter(
     (item) => item.discountPercentage > 15,
   );
   const premiumProducts = products?.filter((item) => item.isPremium === true);
 
+  // Handle add to cart
   const handleAddToCart = async (product) => {
     try {
       if (product.trackInventory && product.quantity === 0) {
@@ -69,20 +166,12 @@ const Home = () => {
     }
   };
 
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const res = await api.get("/categories");
-      return res.data;
-    },
-  });
-
   const handleCategoryClick = (categoryId, categoryName) => {
     if (categoryId && categoryName) {
       router.push(
         `/shop?category=${categoryId}&categoryName=${encodeURIComponent(
-          categoryName
-        )}`
+          categoryName,
+        )}`,
       );
     } else {
       router.push(`/shop?category=${categoryId || ""}`);
@@ -91,6 +180,48 @@ const Home = () => {
 
   const toggleWishlist = (productId) => {
     console.log("Toggle wishlist:", productId);
+  };
+
+  // Get discount icon based on offer type
+  const getDiscountIcon = (offerType) => {
+    const icons = {
+      limited_time_offer: <FaClock className="text-amber-300 text-xl" />,
+      seasonal: <FaLeaf className="text-amber-300 text-xl" />,
+      clearance: <FaTags className="text-amber-300 text-xl" />,
+      flash_sale: <FaFire className="text-amber-300 text-xl" />,
+    };
+    return icons[offerType] || <FaGift className="text-amber-300 text-xl" />;
+  };
+
+  // Get discount label
+  const getDiscountLabel = (offerType) => {
+    const labels = {
+      limited_time_offer: "LIMITED TIME OFFER",
+      seasonal: "SEASONAL SALE",
+      clearance: "CLEARANCE SALE",
+      flash_sale: "⚡ FLASH SALE",
+    };
+    return labels[offerType] || "SPECIAL OFFER";
+  };
+
+  // Get gradient based on offer type
+  const getDiscountGradient = (offerType) => {
+    const gradients = {
+      limited_time_offer: "from-amber-600 to-amber-700",
+      seasonal: "from-emerald-600 to-emerald-700",
+      clearance: "from-red-600 to-red-700",
+      flash_sale: "from-orange-500 to-red-600",
+    };
+    return gradients[offerType] || "from-amber-600 to-amber-700";
+  };
+
+  // Format coupon discount
+  const formatDiscountValue = (coupon) => {
+    if (!coupon) return "Special Offer";
+    if (coupon.type === "percentage") {
+      return `${coupon.value}% OFF`;
+    }
+    return `$${coupon.value} OFF`;
   };
 
   return (
@@ -163,7 +294,7 @@ const Home = () => {
                 <BannerSlider />
               </div>
 
-              {/* Trusted Brands & Event Offers */}
+              {/* Trusted Brands & Dynamic Discount Offers */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 py-5">
                 {/* Premium Brands */}
                 <div className="bg-white rounded-2xl shadow-xl p-6 border border-amber-200">
@@ -198,49 +329,235 @@ const Home = () => {
                   </div>
                 </div>
 
-                {/* Special Event Offer Banner */}
-                <div className="bg-linear-to-r from-amber-600 to-amber-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 opacity-10">
-                    <FaGift className="text-8xl" />
-                  </div>
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FaFire className="text-amber-300 text-xl" />
-                      <span className="text-sm font-semibold bg-amber-500 px-3 py-1 rounded-full">
-                        LIMITED TIME OFFER
-                      </span>
+                {/* Dynamic Discount Offer Slider */}
+                <div className="relative">
+                  {discountsLoading ? (
+                    <div className="bg-gray-200 rounded-2xl p-6 h-full flex items-center justify-center">
+                      <div className="text-gray-500">Loading offers...</div>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">
-                      Eid-ul-Fitr Mega Sale
-                    </h2>
-                    <p className="text-amber-100 mb-4">
-                      Get up to 50% off on fusion leather collection + Free
-                      Gift
-                    </p>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="text-center">
-                        <div className="bg-white/20 rounded-lg px-3 py-2">
-                          <span className="text-2xl font-bold">12</span>
-                          <span className="text-sm"> Days</span>
-                        </div>
+                  ) : discounts && discounts.length > 0 ? (
+                    <div className="relative overflow-hidden rounded-2xl shadow-xl h-[320px]">
+                      {/* Discount Cards Container with Smooth Transition */}
+                      <div
+                        className="flex transition-transform duration-700 ease-in-out h-full will-change-transform"
+                        style={{
+                          transform: `translateX(-${currentDiscountIndex * 100}%)`,
+                          transitionTimingFunction:
+                            "cubic-bezier(0.4, 0, 0.2, 1)",
+                        }}
+                      >
+                        {discounts.map((discount, index) => (
+                          <div
+                            key={discount._id}
+                            className="min-w-full h-full flex-shrink-0"
+                          >
+                             <div className="bg-linear-to-r from-amber-600 to-amber-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden min-h-70">
+                              {/* Background Decoration with Smooth Opacity */}
+                              <div className="absolute top-0 right-0 opacity-10 transition-opacity duration-700">
+                                <FaGift className="text-8xl" />
+                              </div>
+                              <div className="absolute bottom-0 left-0 opacity-5 transition-opacity duration-700">
+                                <FaTags className="text-6xl" />
+                              </div>
+
+                              {/* Content with Fade Animation */}
+                              <div className="relative z-10 flex flex-col h-full animate-fadeIn">
+                                {/* Header */}
+                                <div className="flex items-center gap-2 mb-3 h-8">
+                                  <div className="transition-transform duration-500 hover:scale-110">
+                                    {getDiscountIcon(discount.offerType)}
+                                  </div>
+                                  <span className="text-sm font-semibold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm whitespace-nowrap transition-all duration-300 hover:bg-white/30">
+                                    {getDiscountLabel(discount.offerType)}
+                                  </span>
+                                </div>
+
+                                {/* Title */}
+                                <h2 className="text-2xl font-bold mb-1 h-9 line-clamp-1 transition-colors duration-300">
+                                  {discount.title}
+                                </h2>
+
+                                {/* Description */}
+                                <p className="text-white/90 text-sm mb-3 h-10 line-clamp-2 transition-opacity duration-300">
+                                  {discount.description}
+                                </p>
+
+                                {/* Discount Value & Offer Code */}
+                                <div className="flex flex-wrap items-center gap-2 mb-3 min-h-[40px]">
+                                  {discount.coupon && (
+                                    <>
+                                      <div className="bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full whitespace-nowrap transition-all duration-300 hover:bg-white/30 hover:scale-105">
+                                        <span className="font-bold text-lg">
+                                          {formatDiscountValue(discount.coupon)}
+                                        </span>
+                                        {discount.coupon.minPurchase && (
+                                          <span className="text-xs ml-2 opacity-80 whitespace-nowrap">
+                                            Min. ${discount.coupon.minPurchase}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <button
+                                        onClick={() => {
+                                          if (discount.coupon?.code) {
+                                            navigator.clipboard.writeText(
+                                              discount.coupon.code,
+                                            );
+                                            toast.success(
+                                              `Coupon code ${discount.coupon.code} copied!`,
+                                            );
+                                          }
+                                        }}
+                                        className="bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300 cursor-pointer group whitespace-nowrap flex items-center gap-1 hover:scale-105"
+                                        title="Click to copy coupon code"
+                                      >
+                                        <span className="text-xs opacity-80">
+                                          Code:
+                                        </span>
+                                        <span className="font-mono font-bold tracking-wider group-hover:text-amber-200 transition-colors duration-300">
+                                          {discount.coupon.code}
+                                        </span>
+                                        <span className="text-xs opacity-60 group-hover:opacity-100 transition-opacity duration-300">
+                                          📋
+                                        </span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* Spacer */}
+                                <div className="flex-1"></div>
+
+                                {/* Bottom Section - Timer and CTA */}
+                                <div className="flex items-end justify-between mt-2 pt-2 border-t border-white/10 min-h-[70px]">
+                                  {/* Timer with Smooth Updates */}
+                                  <div className="flex-1">
+                                    {timeRemaining[index] && (
+                                      <div className="flex items-center gap-3">
+                                        <FaClock className="text-white/70 shrink-0 animate-pulse" />
+                                        <div className="flex gap-2 flex-wrap">
+                                          {[
+                                            "days",
+                                            "hours",
+                                            "minutes",
+                                            "seconds",
+                                          ].map((unit) => (
+                                            <div
+                                              key={unit}
+                                              className="bg-white/20 backdrop-blur-sm rounded-lg px-2.5 py-1 text-center min-w-[42px] transition-all duration-300 hover:bg-white/30 hover:scale-105"
+                                            >
+                                              <span className="text-lg font-bold transition-all duration-300">
+                                                {String(
+                                                  timeRemaining[index][unit],
+                                                ).padStart(2, "0")}
+                                              </span>
+                                              <span className="text-[10px] block opacity-70 leading-tight capitalize">
+                                                {unit}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* CTA Button with Hover Animation */}
+                                  <div className="shrink-0 ml-3">
+                                    <Link
+                                      href={`/shop?discount=${discount._id}`}
+                                      className="inline-block bg-white text-amber-700 px-5 py-2 rounded-full font-semibold transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl whitespace-nowrap text-sm hover:scale-105 hover:bg-amber-50 active:scale-95"
+                                    >
+                                      Claim Offer →
+                                    </Link>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="text-center">
-                        <div className="bg-white/20 rounded-lg px-3 py-2">
-                          <span className="text-2xl font-bold">08</span>
-                          <span className="text-sm"> Hours</span>
+
+                      {/* Navigation Arrows with Smooth Hover */}
+                      {discounts.length > 1 && (
+                        <>
+                          <button
+                            onClick={handlePrevDiscount}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full transition-all duration-300 z-20 hover:scale-110 active:scale-95"
+                          >
+                            <FaChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleNextDiscount}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full transition-all duration-300 z-20 hover:scale-110 active:scale-95"
+                          >
+                            <FaChevronRight className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+
+                      {/* Dots Indicator with Smooth Transition */}
+                      {discounts.length > 1 && (
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                          {discounts.map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => goToDiscount(index)}
+                              className={`transition-all duration-500 rounded-full ${
+                                index === currentDiscountIndex
+                                  ? "bg-white w-6 h-2"
+                                  : "bg-white/50 hover:bg-white/70 w-2 h-2"
+                              }`}
+                            />
+                          ))}
                         </div>
+                      )}
+                    </div>
+                  ) : (
+                    // Fallback static offer if no discounts from backend
+                    <div className="bg-linear-to-r from-amber-600 to-amber-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden min-h-70">
+                      <div className="absolute top-0 right-0 opacity-10">
+                        <FaGift className="text-8xl" />
                       </div>
-                      <div className="text-center">
-                        <div className="bg-white/20 rounded-lg px-3 py-2">
-                          <span className="text-2xl font-bold">45</span>
-                          <span className="text-sm"> Mins</span>
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FaFire className="text-amber-300 text-xl" />
+                          <span className="text-sm font-semibold bg-amber-500 px-3 py-1 rounded-full">
+                            LIMITED TIME OFFER
+                          </span>
                         </div>
+                        <h2 className="text-2xl font-bold mb-2">
+                          Eid-ul-Fitr Mega Sale
+                        </h2>
+                        <p className="text-amber-100 mb-4">
+                          Get up to 50% off on fusion leather collection + Free
+                          Gift
+                        </p>
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="text-center">
+                            <div className="bg-white/20 rounded-lg px-3 py-2">
+                              <span className="text-2xl font-bold">12</span>
+                              <span className="text-sm"> Days</span>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="bg-white/20 rounded-lg px-3 py-2">
+                              <span className="text-2xl font-bold">08</span>
+                              <span className="text-sm"> Hours</span>
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="bg-white/20 rounded-lg px-3 py-2">
+                              <span className="text-2xl font-bold">45</span>
+                              <span className="text-sm"> Mins</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button className="bg-white text-amber-700 px-6 py-2 rounded-full font-semibold hover:bg-amber-100 transition cursor-pointer">
+                          Claim Offer →
+                        </button>
                       </div>
                     </div>
-                    <button className="bg-white text-amber-700 px-6 py-2 rounded-full font-semibold hover:bg-amber-100 transition cursor-pointer">
-                      Claim Offer →
-                    </button>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -331,9 +648,7 @@ const Home = () => {
 
                   <button
                     onClick={() => handleAddToCart(product)}
-                    disabled={
-                      product.trackInventory && product.quantity === 0
-                    }
+                    disabled={product.trackInventory && product.quantity === 0}
                     className={`mt-auto w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                       product.trackInventory && product.quantity === 0
                         ? "bg-gray-300 cursor-not-allowed"

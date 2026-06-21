@@ -15,12 +15,7 @@ import {
   FaApplePay,
   FaGooglePay,
 } from "react-icons/fa";
-import {
-  MdLocationOn,
-  MdPhone,
-  MdEmail,
-  MdAccessTime,
-} from "react-icons/md";
+import { MdLocationOn, MdPhone, MdEmail, MdAccessTime } from "react-icons/md";
 import { FaTruck, FaShieldAlt, FaUndo, FaHeadset } from "react-icons/fa";
 import { FaGem, FaLeaf, FaGift } from "react-icons/fa6";
 
@@ -61,21 +56,19 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand Column */}
           <div>
-            <Link href="/" className="flex items-center gap-2 mb-6">
+            <Link href="/" className="flex items-center gap-2">
               <img
-                src="/icon.png"
-                alt="Logo"
-                className="w-10 h-10 object-contain"
+                src="https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781946003/ChatGPT_Image_Jun_20_2026_02_38_14_PM_sqijgu.png"
+                alt="Discount Store"
+                className="h-15 w-auto object-contain"
+                style={{ maxHeight: "60px" }}
               />
-              <span className="text-xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-                DiscountStore
-              </span>
             </Link>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-              Premium leather and fusion products crafted with excellence. 
+              Premium leather and fusion products crafted with excellence.
               Bringing you the finest quality since 2024.
             </p>
-            
+
             {/* Social Links */}
             <div className="flex gap-3">
               <a
@@ -159,7 +152,7 @@ const Footer = () => {
               Get In Touch
               <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-amber-500 mt-1"></span>
             </h3>
-            
+
             <div className="space-y-4 mb-6">
               <div className="flex items-start gap-3">
                 <MdLocationOn className="text-amber-400 text-lg mt-0.5" />
@@ -173,31 +166,13 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-3">
                 <MdEmail className="text-amber-400 text-lg" />
-                <p className="text-gray-400 text-sm">support@discountStore.com</p>
+                <p className="text-gray-400 text-sm">
+                  support@discountStore.com
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 <MdAccessTime className="text-amber-400 text-lg" />
                 <p className="text-gray-400 text-sm">Mon-Sat: 9AM - 8PM</p>
-              </div>
-            </div>
-
-            {/* Newsletter */}
-            <div>
-              <h4 className="text-sm font-semibold text-white mb-3">
-                Subscribe to our newsletter
-              </h4>
-              <div className="flex flex-col gap-2">
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-amber-500 transition"
-                />
-                <button className="bg-linear-to-r from-amber-500 to-amber-600 text-white px-4 py-2.5 rounded-lg font-semibold text-sm hover:from-amber-600 hover:to-amber-700 transition-all duration-300">
-                  Subscribe
-                </button>
-                <p className="text-gray-500 text-xs mt-2">
-                  Get 15% off on first purchase
-                </p>
               </div>
             </div>
           </div>
@@ -213,7 +188,9 @@ const Footer = () => {
                 className="text-gray-400 hover:text-amber-400 text-sm transition flex items-center gap-1"
               >
                 {category.name}
-                <span className="text-amber-500 text-xs">({category.count})</span>
+                <span className="text-amber-500 text-xs">
+                  ({category.count})
+                </span>
               </Link>
             ))}
           </div>

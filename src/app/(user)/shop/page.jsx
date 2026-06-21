@@ -103,6 +103,7 @@ function ShopContent() {
 
   // Extract products and pagination from response
   const products = productsResponse?.data || [];
+  console.log("this is the product data",products)
   const pagination = productsResponse?.pagination || {
     total: 0,
     page: 1,

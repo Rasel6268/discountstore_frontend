@@ -80,7 +80,7 @@ const navigation = [
     subItems: [
       {
         name: "Active Discounts",
-        href: "/discounts/active",
+        href: "/discounts/all",
         color: "text-red-300",
       },
       { name: "Add Discount", href: "/discounts/add", color: "text-red-300" },

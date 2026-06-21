@@ -4,7 +4,9 @@ export const productApi = {
   // Create product
   async createProduct(data) {
     const response = await api.post('/products', data);
+    console.log("product",response.data)
     return response.data;
+    
   },
 
   // Get all products with filters

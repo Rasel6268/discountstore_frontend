@@ -1,6 +1,7 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { useQueryClient } from '@tanstack/react-query';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useBrands } from '@/hooks/useBrands';
@@ -29,6 +30,8 @@ import toast from 'react-hot-toast';
 import ProductForm from '@/components/product/ProductForm';
 
 const ProductsPage = () => {
+  const queryClient = useQueryClient();
+  
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -50,34 +53,46 @@ const ProductsPage = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const { data, isLoading, error, refetch } = useProducts({
+  // Use products with proper configuration
+  const { 
+    data, 
+    isLoading, 
+    error, 
+    refetch, 
+    isRefetching,
+    isFetching
+  } = useProducts({
     ...filters,
     sortBy: sortField,
     sortOrder: sortOrder
   });
+  
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
   const deleteProduct = useDeleteProduct();
   
   const products = data?.data || [];
-
   const pagination = data?.pagination || { total: 0, page: 1, limit: 10, pages: 1 };
 
-  const handleFilterChange = (key, value) => {
+  // Handle filter changes with debounce
+  const handleFilterChange = useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
-  };
+  }, []);
 
-  const handleSort = (field) => {
+  // Handle sort
+  const handleSort = useCallback((field) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortOrder('asc');
     }
-  };
+  }, [sortField, sortOrder]);
 
-  const clearFilters = () => {
+  // Clear all filters
+  const clearFilters = useCallback(() => {
     setFilters({
       search: '',
       category: '',
@@ -92,9 +107,45 @@ const ProductsPage = () => {
       page: 1,
       limit: 10
     });
-  };
+  }, []);
 
-  const handleDelete = async (id, name) => {
+  // Enhanced refresh function
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      // Invalidate the query to force refetch
+      await queryClient.invalidateQueries({ 
+        queryKey: ['products'] 
+      });
+      
+      // Also invalidate specific query with filters
+      await queryClient.invalidateQueries({ 
+        queryKey: ['products', { ...filters, sortBy: sortField, sortOrder: sortOrder }] 
+      });
+      
+      // Force refetch
+      await refetch();
+      
+      toast.success('Products refreshed successfully');
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast.error('Failed to refresh products');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient, filters, sortField, sortOrder, refetch]);
+
+  // Auto-refetch when filters change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      refetch();
+    }, 300); // Debounce
+
+    return () => clearTimeout(timer);
+  }, [filters, sortField, sortOrder, refetch]);
+
+  // Handle delete with proper cache invalidation
+  const handleDelete = useCallback(async (id, name) => {
     toast.custom((t) => (
       <div className="bg-white rounded-lg shadow-lg p-4 max-w-md">
         <p className="text-gray-800 mb-4">Delete "{name}"? This action cannot be undone.</p>
@@ -108,8 +159,18 @@ const ProductsPage = () => {
           <button
             onClick={async () => {
               toast.dismiss(t.id);
-              await deleteProduct.mutateAsync(id);
-              refetch();
+              try {
+                await deleteProduct.mutateAsync(id);
+                // Invalidate the query to refetch
+                await queryClient.invalidateQueries({ 
+                  queryKey: ['products'] 
+                });
+                await refetch();
+                toast.success('Product deleted successfully');
+              } catch (error) {
+                console.error('Delete error:', error);
+                toast.error('Failed to delete product');
+              }
             }}
             className="px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
@@ -118,25 +179,25 @@ const ProductsPage = () => {
         </div>
       </div>
     ), { duration: 5000 });
-  };
+  }, [deleteProduct, queryClient, refetch]);
 
-  const handleEdit = (product) => {
+  const handleEdit = useCallback((product) => {
     setEditingProduct(product);
     setShowProductForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handleView = (product) => {
+  const handleView = useCallback((product) => {
     setSelectedProduct(product);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setSelectedProduct(null);
     setShowProductForm(false);
     setEditingProduct(null);
-  };
+  }, []);
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = useCallback((status) => {
     const badges = {
       active: 'bg-green-100 text-green-800',
       draft: 'bg-gray-100 text-gray-800',
@@ -144,22 +205,22 @@ const ProductsPage = () => {
       archived: 'bg-yellow-100 text-yellow-800'
     };
     return badges[status] || badges.draft;
-  };
+  }, []);
 
-  const formatPrice = (price) => {
+  const formatPrice = useCallback((price) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(price);
-  };
+  }, []);
 
-  const SortIcon = ({ field }) => {
+  const SortIcon = useCallback(({ field }) => {
     if (sortField !== field) return <ChevronUp size={14} className="text-gray-400" />;
     return sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
-  };
+  }, [sortField, sortOrder]);
 
   // Helper function to render product badges
-  const renderProductBadges = (product) => {
+  const renderProductBadges = useCallback((product) => {
     const badges = [];
     
     if (product.isFeatured) {
@@ -190,7 +251,17 @@ const ProductsPage = () => {
     }
     
     return badges;
-  };
+  }, []);
+
+  // Handle product form success
+  const handleProductFormSuccess = useCallback(async () => {
+    closeModal();
+    await queryClient.invalidateQueries({ 
+      queryKey: ['products'] 
+    });
+    await refetch();
+    toast.success('Product saved successfully');
+  }, [closeModal, queryClient, refetch]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -210,10 +281,15 @@ const ProductsPage = () => {
             
             <div className="flex gap-3">
               <button
-                onClick={() => refetch()}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-all"
+                onClick={handleRefresh}
+                disabled={isRefreshing || isRefetching || isFetching}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <RefreshCw size={18} />
+                {(isRefreshing || isRefetching || isFetching) ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <RefreshCw size={18} />
+                )}
                 Refresh
               </button>
               <button
@@ -386,7 +462,7 @@ const ProductsPage = () => {
               <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
               <p className="text-red-600 mb-4">Failed to load products</p>
               <button
-                onClick={() => refetch()}
+                onClick={handleRefresh}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               >
                 Try Again
@@ -412,7 +488,7 @@ const ProductsPage = () => {
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('name')} className="flex items-center gap-1">
+                        <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-gray-700">
                           Product <SortIcon field="name" />
                         </button>
                       </th>
@@ -420,7 +496,7 @@ const ProductsPage = () => {
                         SKU
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('regularPrice')} className="flex items-center gap-1">
+                        <button onClick={() => handleSort('regularPrice')} className="flex items-center gap-1 hover:text-gray-700">
                           Price <SortIcon field="regularPrice" />
                         </button>
                       </th>
@@ -428,7 +504,7 @@ const ProductsPage = () => {
                         Category/Brand
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('quantity')} className="flex items-center gap-1">
+                        <button onClick={() => handleSort('quantity')} className="flex items-center gap-1 hover:text-gray-700">
                           Stock <SortIcon field="quantity" />
                         </button>
                       </th>
@@ -436,7 +512,7 @@ const ProductsPage = () => {
                         Status & Badges
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1">
+                        <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1 hover:text-gray-700">
                           Created <SortIcon field="createdAt" />
                         </button>
                       </th>
@@ -450,7 +526,7 @@ const ProductsPage = () => {
                       <tr key={product._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden">
+                            <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                               {product.images?.[0] ? (
                                 <img src={product.images[0].url} alt={product.name} className="h-full w-full object-cover" />
                               ) : (
@@ -614,10 +690,7 @@ const ProductsPage = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <ProductForm
-              onSuccess={() => {
-                closeModal();
-                refetch();
-              }}
+              onSuccess={handleProductFormSuccess}
               editingProduct={editingProduct}
               setEditingProduct={setEditingProduct}
               onCancel={closeModal}

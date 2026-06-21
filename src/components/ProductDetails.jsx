@@ -807,7 +807,7 @@ const ProductDetailsPage = () => {
 
                     <div className="flex flex-wrap gap-3">
                       {product.colors.map((color) => {
-                        const isAvailable = color.isActive !== false && (color.quantity || 0) > 0;
+                        const isAvailable = color.isActive !== false;
 
                         return (
                           <button
