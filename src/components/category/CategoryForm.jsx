@@ -1,4 +1,3 @@
-// components/admin/CategoryForm.jsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -14,7 +13,8 @@ import {
   Loader2, 
   FolderPlus, 
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  Trash2
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -82,6 +82,11 @@ const CategoryForm = ({
       order: formData.order,
     };
 
+    // FIX: Include parentCategory in payload if it exists
+    if (formData.parentCategory) {
+      payload.parentCategory = formData.parentCategory;
+    }
+
     try {
       if (editingCategory) {
         await updateCategory.mutateAsync({ id: editingCategory._id, data: payload });
@@ -118,7 +123,7 @@ const CategoryForm = ({
           {(editingCategory || parentCategoryId) && (
             <button
               onClick={reset}
-              className="text-white/80 hover:text-white transition-colors"
+              className="text-white/80 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -175,7 +180,7 @@ const CategoryForm = ({
               name="parentCategory"
               value={formData.parentCategory}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all cursor-pointer"
             >
               <option value="">Main Category (No Parent)</option>
               {mainCategories.map((cat) => (
@@ -228,7 +233,7 @@ const CategoryForm = ({
             <button
               type="button"
               onClick={reset}
-              className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all"
+              className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
             >
               Cancel
             </button>

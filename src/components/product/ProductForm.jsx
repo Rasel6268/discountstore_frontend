@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
 import { useBrands } from "@/hooks/useBrands";
 import {
@@ -11,7 +11,6 @@ import {
   Box,
   Image,
   Truck,
-  Calendar,
   Ruler,
   Shirt,
   Star,
@@ -19,10 +18,36 @@ import {
   Award,
   Palette,
 } from "lucide-react";
-import ProductSizeManager from "../ProductSizeManager";
-import { useQuery } from "@tanstack/react-query";
 import api from "@/config/api";
 import toast from "react-hot-toast";
+import ProductSizeManager from "../ProductSizeManager";
+
+// Custom hooks for product mutations
+const useCreateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await api.post("/products", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
+
+const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const response = await api.put(`/products/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+};
 
 const ProductForm = ({
   onSuccess,
@@ -31,40 +56,25 @@ const ProductForm = ({
   onCancel,
 }) => {
   const [formData, setFormData] = useState({
-    // Basic Info
     name: "",
     description: "",
     shortDescription: "",
-
-    // Pricing
     regularPrice: "",
     discountPrice: "",
     costPerItem: "",
-
-    // Categories
     category: "",
     subcategory: "",
     brand: "",
-
-    // Inventory
     sku: "",
     quantity: "",
     lowStockThreshold: "10",
     trackInventory: true,
     allowBackorder: false,
-
-    // Size Management
     hasSizes: false,
     sizes: [],
-
-    // Color Management
     hasColors: false,
     colors: [],
-
-    // Images
     images: [],
-
-    // Status
     status: "draft",
     isActive: true,
     isFeatured: false,
@@ -72,14 +82,11 @@ const ProductForm = ({
     isBest: false,
     isPublished: false,
     isFreeShipping: false,
-
-    // Variants (optional)
     variants: [],
   });
 
   const [errors, setErrors] = useState({});
   const [imageInput, setImageInput] = useState({ url: "", alt: "" });
-  const [showVariants, setShowVariants] = useState(false);
   const [sizeEnabled, setSizeEnabled] = useState(false);
   const [colorEnabled, setColorEnabled] = useState(false);
 
@@ -88,22 +95,45 @@ const ProductForm = ({
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
 
-  // Fetch colors from API
+  // Fetch colors from API with error handling
   const { data: colorsData = [] } = useQuery({
     queryKey: ["colors"],
     queryFn: async () => {
-      const res = await api.get("/colors/all");
-      return res.data?.data || res.data || [];
+      try {
+        const res = await api.get("/colors/all");
+        return res.data?.data || res.data || [];
+      } catch (error) {
+        console.error("Error fetching colors:", error);
+        return [];
+      }
     },
+    enabled: true,
   });
 
-  // Transform colors data
-  const availableColors = colorsData.map((color) => ({
-    _id: color._id,
-    name: color.name,
-    hexCode: color.hexCode || "#000000",
-    isActive: color.isActive,
-  }));
+  // Transform colors data with safe access
+  const availableColors = Array.isArray(colorsData)
+    ? colorsData.map((color) => ({
+        _id: color._id || color.id,
+        name: color.name || "Unnamed Color",
+        hexCode: color.hexCode || "#000000",
+        isActive: color.isActive !== false,
+      }))
+    : [];
+
+  // Fetch size groups from API
+  const { data: sizeGroupsData = [] } = useQuery({
+    queryKey: ["product-sizes"],
+    queryFn: async () => {
+      try {
+        const res = await api.get("/sizes/all");
+        return res.data?.data || res.data || [];
+      } catch (error) {
+        console.error("Error fetching sizes:", error);
+        return [];
+      }
+    },
+    enabled: true,
+  });
 
   // Get subcategories based on selected category
   const selectedCategory = categories.find((c) => c._id === formData.category);
@@ -128,9 +158,20 @@ const ProductForm = ({
         trackInventory: editingProduct.trackInventory !== false,
         allowBackorder: editingProduct.allowBackorder || false,
         hasSizes: editingProduct.hasSizes || false,
-        sizes: editingProduct.sizes || [],
+        sizes:
+          editingProduct.sizes?.map((size) => ({
+            name: size.name,
+            type: size.type || "", // Aligned with the new ProductSizeManager 'type' grouping
+            quantity: size.quantity || 0,
+            extraPrice: size.extraPrice || 0,
+          })) || [],
         hasColors: editingProduct.hasColors || false,
-        colors: editingProduct.colors || [],
+        colors:
+          editingProduct.colors?.map((color) => ({
+            name: color.name,
+            _id: color._id || "",
+            hexCode: color.hexCode || "#000000",
+          })) || [],
         images: editingProduct.images || [],
         status: editingProduct.status || "draft",
         isActive: editingProduct.isActive !== false,
@@ -149,17 +190,14 @@ const ProductForm = ({
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    // Handle numeric fields - prevent negative values
     if (type === "number") {
       const numValue = parseFloat(value);
-      // Allow empty string or positive numbers (including 0)
       if (value === "" || numValue >= 0) {
         setFormData((prev) => ({
           ...prev,
-          [name]: value, // Keep as string for input display
+          [name]: value,
         }));
       }
-      // If negative, don't update
       return;
     }
 
@@ -176,7 +214,7 @@ const ProductForm = ({
   const handleSizesChange = (sizes) => {
     const totalQuantity = sizes.reduce(
       (sum, size) => sum + (size.quantity || 0),
-      0,
+      0
     );
 
     setFormData((prev) => ({
@@ -189,7 +227,6 @@ const ProductForm = ({
 
   const handleSizeToggle = (enabled) => {
     setSizeEnabled(enabled);
-
     if (!enabled) {
       setFormData((prev) => ({
         ...prev,
@@ -204,10 +241,8 @@ const ProductForm = ({
     }
   };
 
-  // Color Management Functions
   const handleColorToggle = (enabled) => {
     setColorEnabled(enabled);
-
     if (!enabled) {
       setFormData((prev) => ({
         ...prev,
@@ -278,18 +313,15 @@ const ProductForm = ({
     if (!formData.regularPrice)
       newErrors.regularPrice = "Regular price is required";
 
-    // Validate regular price is positive
     if (formData.regularPrice && parseFloat(formData.regularPrice) < 0) {
       newErrors.regularPrice = "Regular price must be greater than 0";
     }
 
-    // Validate cost per item is positive or empty
     if (formData.costPerItem && parseFloat(formData.costPerItem) < 0) {
       newErrors.costPerItem =
         "Cost per item must be greater than or equal to 0";
     }
 
-    // Validate discount price
     if (formData.discountPrice) {
       const discount = parseFloat(formData.discountPrice);
       const regular = parseFloat(formData.regularPrice);
@@ -310,9 +342,10 @@ const ProductForm = ({
     }
 
     if (sizeEnabled && formData.sizes.length > 0) {
-      const sizeNames = formData.sizes.map((s) => s.name.toLowerCase());
+      // Changed from sizeName to name
+      const sizeNames = formData.sizes.map((s) => s.name?.toLowerCase() || "");
       const hasDuplicates = sizeNames.some(
-        (name, index) => sizeNames.indexOf(name) !== index,
+        (name, index) => name && sizeNames.indexOf(name) !== index
       );
       if (hasDuplicates) {
         newErrors.sizes = "Duplicate size names are not allowed";
@@ -323,158 +356,168 @@ const ProductForm = ({
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  // Calculate total quantity from sizes if size management is enabled
-  const totalSizeQuantity = sizeEnabled
-    ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0)
-    : 0;
+    const totalSizeQuantity = sizeEnabled
+      ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0)
+      : 0;
 
-  // Prepare submit data with proper number handling
-  const submitData = {
-    ...formData,
-    regularPrice: parseFloat(formData.regularPrice) || 0,
-    discountPrice: formData.discountPrice
-      ? parseFloat(formData.discountPrice)
-      : undefined,
-    costPerItem: formData.costPerItem
-      ? parseFloat(formData.costPerItem)
-      : undefined,
-    quantity: sizeEnabled
-      ? totalSizeQuantity
-      : parseInt(formData.quantity) || 0,
-    lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
-    hasSizes: sizeEnabled && formData.sizes.length > 0,
-    sizes: sizeEnabled ? formData.sizes : [],
-    hasColors: colorEnabled && formData.colors.length > 0,
-    colors: colorEnabled ? formData.colors : [],
-  };
-  Object.keys(submitData).forEach((key) => {
-    if (submitData[key] === undefined) {
-      delete submitData[key];
-    }
-  });
+    // Prepare submit data
+    const submitData = {
+      name: formData.name || "",
+      description: formData.description || "",
+      shortDescription: formData.shortDescription || "",
+      regularPrice: parseFloat(formData.regularPrice) || 0,
+      discountPrice: formData.discountPrice
+        ? parseFloat(formData.discountPrice)
+        : undefined,
+      costPerItem: formData.costPerItem
+        ? parseFloat(formData.costPerItem)
+        : undefined,
+      category: formData.category || "",
+      subcategory: formData.subcategory || "",
+      brand: formData.brand || "",
+      sku: formData.sku || "",
+      quantity: sizeEnabled ? totalSizeQuantity : parseInt(formData.quantity) || 0,
+      lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
+      trackInventory: formData.trackInventory !== false,
+      allowBackorder: formData.allowBackorder || false,
+      hasSizes: sizeEnabled && formData.sizes.length > 0,
+      
+      sizes: sizeEnabled
+        ? formData.sizes.map((size) => ({
+            name: size.name, 
+            quantity: size.quantity || 0,
+            type: size.type || "",
+            extraPrice: size.extraPrice || 0,
+          }))
+        : [],
+      hasColors: colorEnabled && formData.colors.length > 0,
+      colors: colorEnabled
+        ? formData.colors.map((color) => ({
+            name: color.name, // Only send the name
+          }))
+        : [],
+      images: formData.images || [],
+      status: formData.status || "draft",
+      isActive: formData.isActive !== false,
+      isFeatured: formData.isFeatured || false,
+      isPremium: formData.isPremium || false,
+      isBest: formData.isBest || false,
+      isPublished: formData.isPublished || false,
+      isFreeShipping: formData.isFreeShipping || false,
+      variants: formData.variants || [],
+    };
 
-  try {
-    let result;
-    if (editingProduct) {
-      result = await updateProduct.mutateAsync({
-        id: editingProduct._id,
-        data: submitData,
-      });
-    } else {
-      result = await createProduct.mutateAsync(submitData);
-    }
+    // Remove undefined values
+    Object.keys(submitData).forEach((key) => {
+      if (submitData[key] === undefined) {
+        delete submitData[key];
+      }
+    });
 
-    // ✅ Check if result has success property and it's false
-    if (result.success === false) {
-      const errorMessage = result.error || result.message || "Failed to save product";
-      toast.error(errorMessage);
-      return;
-    }
+    console.log("Submitting product data:", JSON.stringify(submitData, null, 2));
 
-    // ✅ Check if response indicates success (has data or success true)
-    const isSuccess = result.success === true || result.data !== null || result.data !== undefined;
-    
-    if (isSuccess) {
-      // Show success toast
-      toast.success(
-        editingProduct
-          ? "Product updated successfully!"
-          : "Product created successfully!",
-      );
-
-      // Reset form if creating new product
-      if (!editingProduct) {
-        // Reset form data
-        setFormData({
-          name: '',
-          description: '',
-          shortDescription: '',
-          regularPrice: '',
-          discountPrice: '',
-          costPerItem: '',
-          category: '',
-          subcategory: '',
-          brand: '',
-          sku: '',
-          quantity: '',
-          lowStockThreshold: '10',
-          trackInventory: true,
-          allowBackorder: false,
-          hasSizes: false,
-          sizes: [],
-          hasColors: false,
-          colors: [],
-          images: [],
-          status: 'draft',
-          isActive: true,
-          isFeatured: false,
-          isPremium: false,
-          isBest: false,
-          isPublished: false,
-          isFreeShipping: false,
-          variants: [],
+    try {
+      let result;
+      if (editingProduct) {
+        result = await updateProduct.mutateAsync({
+          id: editingProduct._id,
+          data: submitData,
         });
-        setSizeEnabled(false);
-        setColorEnabled(false);
-        setImageInput({ url: '', alt: '' });
-      }
-
-      if (onSuccess) onSuccess();
-      if (setEditingProduct) setEditingProduct(null);
-    } else {
-      toast.success(
-        editingProduct
-          ? "Product updated successfully!"
-          : "Product created successfully!",
-      );
-      if (onSuccess) onSuccess();
-      if (setEditingProduct) setEditingProduct(null);
-    }
-  } catch (error) {
-
-    // ✅ Enhanced error handling
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      const status = error.response.status;
-      const data = error.response.data;
-
-      if (status === 400) {
-        const errorMsg = data?.error || data?.message || "Validation error";
-        toast.error(errorMsg);
-      } else if (status === 401) {
-        toast.error("Unauthorized. Please log in again.");
-      } else if (status === 403) {
-        toast.error("You do not have permission to perform this action.");
-      } else if (status === 404) {
-        toast.error("Resource not found.");
-      } else if (status === 409) {
-        toast.error("Conflict: Duplicate or conflicting data.");
-      } else if (status === 500) {
-        toast.error("Server error. Please try again later.");
       } else {
-        toast.error(data?.error || data?.message || `Server error (${status})`);
+        result = await createProduct.mutateAsync(submitData);
       }
-    } else if (error.request) {
-      toast.error("No response from server. Please check your connection.");
-    } else if (error.message) {
-      toast.error(error.message);
-    } else {
-      toast.error("Failed to save product. Please try again.");
+      console.log(result);
+
+      if (result && (result.success === true || result.data)) {
+        toast.success(
+          editingProduct
+            ? "Product updated successfully!"
+            : "Product created successfully!"
+        );
+
+        if (!editingProduct) {
+          // Reset form
+          setFormData({
+            name: "",
+            description: "",
+            shortDescription: "",
+            regularPrice: "",
+            discountPrice: "",
+            costPerItem: "",
+            category: "",
+            subcategory: "",
+            brand: "",
+            sku: "",
+            quantity: "",
+            lowStockThreshold: "10",
+            trackInventory: true,
+            allowBackorder: false,
+            hasSizes: false,
+            sizes: [],
+            hasColors: false,
+            colors: [],
+            images: [],
+            status: "draft",
+            isActive: true,
+            isFeatured: false,
+            isPremium: false,
+            isBest: false,
+            isPublished: false,
+            isFreeShipping: false,
+            variants: [],
+          });
+          setSizeEnabled(false);
+          setColorEnabled(false);
+          setImageInput({ url: "", alt: "" });
+        }
+
+        if (onSuccess) onSuccess();
+        if (setEditingProduct) setEditingProduct(null);
+      } else {
+        const errorMessage = result?.error || result?.message || "Failed to save product";
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      console.error("Product save error:", error);
+
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        if (status === 400) {
+          const errorMsg = data?.error || data?.message || "Validation error";
+          toast.error(errorMsg);
+        } else if (status === 401) {
+          toast.error("Unauthorized. Please log in again.");
+        } else if (status === 403) {
+          toast.error("You do not have permission to perform this action.");
+        } else if (status === 409) {
+          toast.error("Conflict: Duplicate or conflicting data.");
+        } else if (status === 500) {
+          toast.error("Server error. Please try again later.");
+        } else {
+          toast.error(data?.error || data?.message || `Server error (${status})`);
+        }
+      } else if (error.request) {
+        toast.error("No response from server. Please check your connection.");
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to save product. Please try again.");
+      }
     }
-  }
-};
+  };
 
   const isLoading = createProduct.isPending || updateProduct.isPending;
 
-  // Calculate total from sizes
   const totalSizeQuantity = formData.sizes.reduce(
     (sum, size) => sum + (size.quantity || 0),
-    0,
+    0
   );
 
   return (
@@ -493,12 +536,11 @@ const ProductForm = ({
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* ================= BASIC INFORMATION ================= */}
+        {/* Basic Information */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700">
             Basic Information
           </h3>
-
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -554,13 +596,12 @@ const ProductForm = ({
           </div>
         </div>
 
-        {/* ================= PRICING ================= */}
+        {/* Pricing */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <DollarSign size={18} className="text-green-600" />
             Pricing
           </h3>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -578,9 +619,7 @@ const ProductForm = ({
                 placeholder="0.00"
               />
               {errors.regularPrice && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.regularPrice}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.regularPrice}</p>
               )}
             </div>
 
@@ -600,9 +639,7 @@ const ProductForm = ({
                 placeholder="0.00"
               />
               {errors.discountPrice && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.discountPrice}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.discountPrice}</p>
               )}
             </div>
 
@@ -622,21 +659,18 @@ const ProductForm = ({
                 placeholder="0.00"
               />
               {errors.costPerItem && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.costPerItem}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.costPerItem}</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* ================= CATEGORY & BRAND ================= */}
+        {/* Category & Brand */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Box size={18} className="text-purple-600" />
             Category & Brand
           </h3>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -650,11 +684,12 @@ const ProductForm = ({
                 disabled={isLoading}
               >
                 <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
+                {Array.isArray(categories) &&
+                  categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
               </select>
               {errors.category && (
                 <p className="text-red-500 text-xs mt-1">{errors.category}</p>
@@ -673,11 +708,12 @@ const ProductForm = ({
                 disabled={isLoading || !formData.category}
               >
                 <option value="">Select Subcategory</option>
-                {subcategories.map((sub) => (
-                  <option key={sub._id} value={sub._id}>
-                    {sub.name}
-                  </option>
-                ))}
+                {Array.isArray(subcategories) &&
+                  subcategories.map((sub) => (
+                    <option key={sub._id} value={sub._id}>
+                      {sub.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -693,11 +729,12 @@ const ProductForm = ({
                 disabled={isLoading}
               >
                 <option value="">Select Brand</option>
-                {brands.map((b) => (
-                  <option key={b._id} value={b._id}>
-                    {b.name}
-                  </option>
-                ))}
+                {Array.isArray(brands) &&
+                  brands.map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.name}
+                    </option>
+                  ))}
               </select>
               {errors.brand && (
                 <p className="text-red-500 text-xs mt-1">{errors.brand}</p>
@@ -706,13 +743,12 @@ const ProductForm = ({
           </div>
         </div>
 
-        {/* ================= COLOR MANAGEMENT ================= */}
+        {/* Color Management */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Palette size={18} className="text-pink-600" />
             Color Management
           </h3>
-
           <div className="mb-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -727,8 +763,7 @@ const ProductForm = ({
               </span>
             </label>
             <p className="text-xs text-gray-500 mt-1">
-              Enable this if your product comes in different colors (e.g., Red,
-              Blue, Black)
+              Enable this if your product comes in different colors
             </p>
           </div>
 
@@ -743,7 +778,7 @@ const ProductForm = ({
                     .filter((color) => color.isActive !== false)
                     .map((color) => {
                       const isSelected = formData.colors.some(
-                        (c) => c._id === color._id,
+                        (c) => c._id === color._id
                       );
                       return (
                         <button
@@ -801,52 +836,18 @@ const ProductForm = ({
                       </div>
                     ))}
                   </div>
-
-                  <div className="mt-3 p-3 bg-pink-50 rounded-lg border border-pink-200">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-medium text-pink-800">
-                          Color Selection Summary
-                        </p>
-                        <p className="text-xs text-pink-600 mt-1">
-                          Selected {formData.colors.length} color
-                          {formData.colors.length !== 1 ? "s" : ""}
-                        </p>
-                      </div>
-                      <Palette size={20} className="text-pink-500" />
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {formData.colors.map((color) => (
-                        <span
-                          key={color._id}
-                          className="text-xs bg-white px-2 py-1 rounded-full shadow-sm flex items-center gap-1"
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: color.hexCode }}
-                          />
-                          {color.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
                 </div>
-              )}
-
-              {errors.colors && (
-                <p className="text-red-500 text-xs mt-2">{errors.colors}</p>
               )}
             </div>
           )}
         </div>
 
-        {/* ================= SIZE MANAGEMENT ================= */}
+        {/* Size Management */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Ruler size={18} className="text-indigo-600" />
             Size Management
           </h3>
-
           <div className="mb-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -861,8 +862,7 @@ const ProductForm = ({
               </span>
             </label>
             <p className="text-xs text-gray-500 mt-1">
-              Enable this if your product comes in different sizes (e.g., S, M,
-              L, XL)
+              Enable this if your product comes in different sizes
             </p>
           </div>
 
@@ -872,49 +872,21 @@ const ProductForm = ({
                 sizes={formData.sizes}
                 onSizesChange={handleSizesChange}
                 disabled={isLoading}
+                sizeGroups={sizeGroupsData}
               />
               {errors.sizes && (
                 <p className="text-red-500 text-xs mt-2">{errors.sizes}</p>
-              )}
-
-              {formData.sizes.length > 0 && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-blue-800">
-                        Size Inventory Summary
-                      </p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        Total units across all sizes:{" "}
-                        <strong>{totalSizeQuantity}</strong>
-                      </p>
-                    </div>
-                    <Shirt size={20} className="text-blue-500" />
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.sizes.map((size) => (
-                      <span
-                        key={size.name}
-                        className="text-xs bg-white px-2 py-1 rounded-full shadow-sm"
-                      >
-                        {size.name}: {size.quantity} units
-                        {size.extraPrice > 0 && ` (+৳${size.extraPrice})`}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               )}
             </div>
           )}
         </div>
 
-        {/* ================= INVENTORY ================= */}
+        {/* Inventory */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Package size={18} className="text-orange-600" />
             Inventory
           </h3>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1011,13 +983,12 @@ const ProductForm = ({
           </div>
         </div>
 
-        {/* ================= IMAGES ================= */}
+        {/* Images */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Image size={18} className="text-pink-600" />
             Product Images
           </h3>
-
           <div className="mb-4">
             <div className="flex gap-2 mb-2">
               <input
@@ -1063,7 +1034,9 @@ const ProductForm = ({
                   <button
                     type="button"
                     onClick={() => handleSetPrimaryImage(idx)}
-                    className={`text-xs px-2 py-1 rounded cursor-pointer ${img.isPrimary ? "bg-green-500 text-white" : "bg-gray-200"}`}
+                    className={`text-xs px-2 py-1 rounded cursor-pointer ${
+                      img.isPrimary ? "bg-green-500 text-white" : "bg-gray-200"
+                    }`}
                   >
                     {img.isPrimary ? "Primary" : "Set Primary"}
                   </button>
@@ -1080,13 +1053,12 @@ const ProductForm = ({
           </div>
         </div>
 
-        {/* ================= SHIPPING ================= */}
+        {/* Shipping */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Truck size={18} className="text-teal-600" />
             Shipping
           </h3>
-
           <div>
             <label className="flex items-center gap-3">
               <input
@@ -1100,13 +1072,12 @@ const ProductForm = ({
           </div>
         </div>
 
-        {/* ================= STATUS & VISIBILITY ================= */}
+        {/* Status & Visibility */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
             <Star size={18} className="text-yellow-600" />
             Status & Visibility
           </h3>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1155,7 +1126,6 @@ const ProductForm = ({
               <p className="text-sm font-medium text-gray-700 mb-2">
                 Product Badges & Labels
               </p>
-
               <label className="flex items-center gap-3 cursor-pointer mb-2">
                 <input
                   type="checkbox"
@@ -1166,10 +1136,9 @@ const ProductForm = ({
                 />
                 <span className="text-sm text-gray-700 flex items-center gap-1">
                   <Star size={14} className="text-yellow-500" />
-                  Featured Product (Shows in featured sections)
+                  Featured Product
                 </span>
               </label>
-
               <label className="flex items-center gap-3 cursor-pointer mb-2">
                 <input
                   type="checkbox"
@@ -1180,10 +1149,9 @@ const ProductForm = ({
                 />
                 <span className="text-sm text-gray-700 flex items-center gap-1">
                   <Crown size={14} className="text-purple-500" />
-                  Premium Product (High-end/Luxury items)
+                  Premium Product
                 </span>
               </label>
-
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1194,14 +1162,14 @@ const ProductForm = ({
                 />
                 <span className="text-sm text-gray-700 flex items-center gap-1">
                   <Award size={14} className="text-red-500" />
-                  Best Seller (Top selling products)
+                  Best Seller
                 </span>
               </label>
             </div>
           </div>
         </div>
 
-        {/* ================= SUBMIT BUTTON ================= */}
+        {/* Submit Button */}
         <div className="sticky bottom-0 bg-white pt-4 border-t">
           <button
             type="submit"

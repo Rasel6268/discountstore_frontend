@@ -39,6 +39,7 @@ export const useProducts = (filters = {}) => {
     gcTime: 1000 * 60 * 5, // 5 min cache
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: 1,
   });
 };
@@ -91,10 +92,28 @@ export const useCreateProduct = () => {
   return useMutation({
     mutationFn: productApi.createProduct,
 
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      // Invalidate and refetch products
       await queryClient.invalidateQueries({ queryKey: ["products"] });
-
+      
+      // Immediately update the cache with the new product
+      if (data?.data) {
+        queryClient.setQueryData(["products"], (oldData) => {
+          if (!oldData) return oldData;
+          
+          return {
+            ...oldData,
+            data: [data.data, ...(oldData.data || [])],
+            pagination: {
+              ...oldData.pagination,
+              total: (oldData.pagination?.total || 0) + 1
+            }
+          };
+        });
+      }
     },
+
+    
   });
 };
 
@@ -106,6 +125,24 @@ export const useUpdateProduct = () => {
     mutationFn: ({ id, data }) => productApi.updateProduct(id, data),
 
     onSuccess: async (res, variables) => {
+      // Update the specific product in cache
+      if (res?.data) {
+        queryClient.setQueryData(["product", variables.id], res.data);
+        
+        // Update in the products list
+        queryClient.setQueryData(["products"], (oldData) => {
+          if (!oldData) return oldData;
+          
+          return {
+            ...oldData,
+            data: oldData.data.map(product => 
+              product._id === variables.id ? res.data : product
+            )
+          };
+        });
+      }
+
+      // Invalidate all related queries
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({
         queryKey: ["product", variables.id],
@@ -116,6 +153,8 @@ export const useUpdateProduct = () => {
       await queryClient.invalidateQueries({
         queryKey: ["product-sizes", variables.id],
       });
+
+      toast.success(res?.message || "Product updated successfully!");
     },
 
     onError: (err) => {
@@ -131,8 +170,27 @@ export const useDeleteProduct = () => {
   return useMutation({
     mutationFn: productApi.deleteProduct,
 
-    onSuccess: async () => {
+    onSuccess: async (res, variables) => {
+      // Remove from cache immediately
+      queryClient.setQueryData(["products"], (oldData) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          data: oldData.data.filter(product => product._id !== variables),
+          pagination: {
+            ...oldData.pagination,
+            total: (oldData.pagination?.total || 0) - 1
+          }
+        };
+      });
+
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success(res?.message || "Product deleted successfully!");
+    },
+
+    onError: (err) => {
+      toast.error(getErrorMessage(err));
     },
   });
 };
@@ -148,6 +206,14 @@ export const useAddColorToProduct = () => {
       productApi.addColorToProduct(productId, colorData),
 
     onSuccess: async (res, variables) => {
+      // Update product colors in cache
+      if (res?.data) {
+        queryClient.setQueryData(
+          ["product-colors", variables.productId],
+          (oldData) => [...(oldData || []), res.data]
+        );
+      }
+
       await queryClient.invalidateQueries({
         queryKey: ["product", variables.productId],
       });
@@ -200,6 +266,12 @@ export const useRemoveColorFromProduct = () => {
       productApi.removeColorFromProduct(productId, colorId),
 
     onSuccess: async (res, variables) => {
+      // Remove color from cache
+      queryClient.setQueryData(
+        ["product-colors", variables.productId],
+        (oldData) => oldData?.filter(color => color._id !== variables.colorId) || []
+      );
+
       await queryClient.invalidateQueries({
         queryKey: ["product", variables.productId],
       });
@@ -228,6 +300,14 @@ export const useAddSizeToProduct = () => {
       productApi.addSizeToProduct(productId, sizeData),
 
     onSuccess: async (res, variables) => {
+      // Update product sizes in cache
+      if (res?.data) {
+        queryClient.setQueryData(
+          ["product-sizes", variables.productId],
+          (oldData) => [...(oldData || []), res.data]
+        );
+      }
+
       await queryClient.invalidateQueries({
         queryKey: ["product", variables.productId],
       });
@@ -280,6 +360,12 @@ export const useRemoveSizeFromProduct = () => {
       productApi.removeSizeFromProduct(productId, sizeName),
 
     onSuccess: async (res, variables) => {
+      // Remove size from cache
+      queryClient.setQueryData(
+        ["product-sizes", variables.productId],
+        (oldData) => oldData?.filter(size => size.name !== variables.sizeName) || []
+      );
+
       await queryClient.invalidateQueries({
         queryKey: ["product", variables.productId],
       });

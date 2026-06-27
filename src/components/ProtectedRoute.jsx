@@ -1,33 +1,34 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/AuthProvider/AuthProvider';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return;
 
-    // ❌ Not logged in → login page
+    // ❌ Not logged in → capture full path and redirect to login
     if (!user) {
-      router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+      // window.location gets the full path + query params (e.g. /checkout?item=123)
+      const fullPath = window.location.pathname + window.location.search;
+      router.push(`/auth/login?redirect=${encodeURIComponent(fullPath)}`);
       return;
     }
 
     // 🛡️ Role check
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-      // redirect based on role
+      // redirect based on role (aligned with AuthProvider routes)
       if (user.role === 'admin') {
-        router.push('/admin');
+        router.push('/dashboard');
       } else {
-        router.push('/user');
+        router.push('/profile');
       }
     }
-  }, [user, loading, router, pathname, allowedRoles]);
+  }, [user, loading, router, allowedRoles]);
 
   if (loading) {
     return (
@@ -36,7 +37,6 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       </div>
     );
   }
-
 
   if (!user) return null;
 

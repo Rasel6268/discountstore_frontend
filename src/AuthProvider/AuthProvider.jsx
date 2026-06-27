@@ -10,7 +10,7 @@ const AuthContext = createContext({});
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    return "useAuth must be used within an AuthProvider";
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -38,105 +38,102 @@ const AuthProvider = ({ children }) => {
     }
   };
 
- const register = async (name, email, password) => {
-  setLoading(true);
-
-  try {
-    const response = await api.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
-
-    return response.data;
-  } catch (error) {
-
-    return (
-      error.response?.data || {
-        success: false,
-        message: "Registration failed",
-      }
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-  const login = async (email, password) => {
-  setLoading(true);
-
-  try {
-    const res = await api.post("/auth/login", {
-      email,
-      password,
-    });
-
-    const userData = res.data.user;
-
-    setUser(userData);
-
-    toast.success(`Welcome back, ${userData.name}!`);
-
-    if (userData.role === "admin") {
-      router.push("/dashboard");
-    } else {
-      router.push("/profile");
+  const register = async (name, email, password) => {
+    setLoading(true);
+    try {
+      const response = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
+      return response.data;
+    } catch (error) {
+      return (
+        error.response?.data || {
+          success: false,
+          message: "Registration failed",
+        }
+      );
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return {
-      success: true,
-      user: userData,
-    };
-  } catch (error) {
-    console.error("Login error:", error);
+  const login = async (email, password) => {
+    setLoading(true);
 
-    const message =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      "Login failed";
+    try {
+      const res = await api.post("/auth/login", {
+        email,
+        password,
+      });
 
-    toast.error(message);
+      const userData = res.data.user;
+      setUser(userData);
+      toast.success(`Welcome back, ${userData.name}!`);
 
-    return {
-      success: false,
-      error: message,
-    };
-  } finally {
-    setLoading(false);
-  }
-};
+      // 👇 Parse the URL to check for a redirect param
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectUrl = searchParams.get("redirect");
 
-const logout = async () => {
-  setLoading(true);
+      if (redirectUrl) {
+        
+        router.push(redirectUrl);
+      } else if (userData.role === "admin") {
+        router.push("/dashboard");
+      } else {
+        router.push("/profile");
+      }
 
-  try {
-    const res = await api.post("/auth/logout");
+      return {
+        success: true,
+        user: userData,
+      };
+    } catch (error) {
+      console.error("Login error:", error);
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Login failed";
 
-    setUser(null);
+      toast.error(message);
+      return {
+        success: false,
+        error: message,
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    toast.success("Logged out successfully");
+  const logout = async () => {
+    setLoading(true);
 
-    router.push("/auth/login");
+    try {
+      const res = await api.post("/auth/logout");
+      setUser(null);
+      toast.success("Logged out successfully");
+      router.push("/auth/login");
 
-    return {
-      success: true,
-      message: res.data.message,
-    };
-  } catch (error) {
-    const message =
-      error.response?.data?.message || "Failed to log out";
+      return {
+        success: true,
+        message: res.data.message,
+      };
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to log out";
+      toast.error(message);
+      return {
+        success: false,
+        error: message,
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    toast.error(message);
-
-    return {
-      success: false,
-      error: message,
-    };
-  } finally {
-    setLoading(false);
-  }
-};
   const forgotPassword = async (email) => {};
   const resetPassword = async (token, password) => {};
+
   const authData = {
     user,
     loading,
@@ -145,10 +142,14 @@ const logout = async () => {
     logout,
     forgotPassword,
     resetPassword,
-    useAuth,
   };
 
-  return <AuthContext value={authData}>{children}</AuthContext>;
+  // 👇 Fixed context provider here!
+  return (
+    <AuthContext value={authData}>
+      {children}
+    </AuthContext>
+  );
 };
 
 export default AuthProvider;

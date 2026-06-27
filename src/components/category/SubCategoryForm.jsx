@@ -1,4 +1,3 @@
-// components/admin/CategoryForm.jsx
 'use client';
 
 import { useState, useEffect } from "react";

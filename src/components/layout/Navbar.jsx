@@ -72,8 +72,6 @@ const Navbar = () => {
   // Get cart count (total items including quantities)
   const cartCount = mounted ? getTotalItems() : 0;
 
-
-
   // Logout handler
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -233,7 +231,20 @@ const Navbar = () => {
             <FaSearch className="text-lg" />
           </button>
 
-          {/* Cart Icon - Desktop */}
+          {/* Cart Icon - Mobile (visible on all screens) */}
+          <Link
+            href="/cart"
+            className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300 lg:hidden"
+          >
+            <AiOutlineShoppingCart className="text-2xl" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-bounce">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Cart Icon - Desktop (hidden on mobile) */}
           <Link
             href="/cart"
             className="hidden lg:flex relative p-2 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
@@ -246,23 +257,8 @@ const Navbar = () => {
             )}
           </Link>
 
-          {/* Theme Toggle Button */}
-          {themeMounted && (
-            <button
-              onClick={toggleTheme}
-              className="relative p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
-              aria-label="Toggle theme"
-            >
-              <div className="relative w-5 h-5">
-                <FaSun
-                  className={`absolute inset-0 text-yellow-500 transition-all duration-300 ${theme === "dark" ? "opacity-100 rotate-0" : "opacity-0 rotate-90"}`}
-                />
-                <FaMoon
-                  className={`absolute inset-0 text-gray-700 dark:text-gray-300 transition-all duration-300 ${theme === "light" ? "opacity-100 rotate-0" : "opacity-0 -rotate-90"}`}
-                />
-              </div>
-            </button>
-          )}
+          
+          
           {/* User Auth Desktop */}
           {user ? (
             <div ref={userModelRef} className="relative hidden lg:block">
@@ -299,18 +295,6 @@ const Navbar = () => {
                     </div>
                   </div>
                   <div className="py-2">
-                    <Link
-                      href="/cart"
-                      className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                    >
-                      <AiOutlineShoppingCart className="w-4 h-4" /> 
-                      My Cart
-                      {cartCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                          {cartCount}
-                        </span>
-                      )}
-                    </Link>
                     {user.role === "admin" ? (
                       <Link
                         href="/dashboard"
@@ -374,15 +358,10 @@ const Navbar = () => {
             ) : (
               <>
                 <IoIosMenu className="text-2xl text-gray-900 dark:text-white" />
-                {/* Mobile cart badge */}
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                    {cartCount > 9 ? '9+' : cartCount}
-                  </span>
-                )}
               </>
             )}
           </button>
+          
         </div>
       </div>
 
@@ -399,7 +378,6 @@ const Navbar = () => {
               />
               <FaSearch className="absolute right-3 top-3 text-gray-400" />
             </div>
-
             {/* Theme Toggle in Mobile Menu */}
             {themeMounted && (
               <button

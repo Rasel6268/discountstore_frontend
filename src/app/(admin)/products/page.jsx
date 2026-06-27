@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useProducts, useDeleteProduct } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useBrands } from '@/hooks/useBrands';
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ProductForm from '@/components/product/ProductForm';
+import api from '@/config/api';
 
 const ProductsPage = () => {
   const queryClient = useQueryClient();
@@ -86,6 +87,27 @@ const ProductsPage = () => {
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
   const brands = Array.isArray(brandsData) ? brandsData : [];
 
+
+
+  // Auto-refetch on mount and when filters change
+  useEffect(() => {
+    refetch();
+  }, [filters, refetch]);
+
+  // Auto-refetch when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetch();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetch]);
+
   // Handle filter changes with debounce
   const handleFilterChange = useCallback((key, value) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
@@ -124,7 +146,7 @@ const ProductsPage = () => {
     setIsRefreshing(true);
     try {
       await queryClient.invalidateQueries({ queryKey: ['products'] });
-      await refetch();
+      await refetch({ throwOnError: true });
       toast.success('Products refreshed successfully');
     } catch (error) {
       console.error('Refresh error:', error);
@@ -152,7 +174,7 @@ const ProductsPage = () => {
               try {
                 await deleteProduct.mutateAsync(id);
                 await queryClient.invalidateQueries({ queryKey: ['products'] });
-                await refetch();
+                await refetch({ throwOnError: true });
                 toast.success('Product deleted successfully');
               } catch (error) {
                 console.error('Delete error:', error);
@@ -240,11 +262,24 @@ const ProductsPage = () => {
     return badges;
   }, []);
 
-  const handleProductFormSuccess = useCallback(async () => {
+  const handleProductFormSuccess = useCallback(async (result) => {
     closeModal();
-    await queryClient.invalidateQueries({ queryKey: ['products'] });
-    await refetch();
-    toast.success('Product saved successfully');
+    
+    try {
+      // Force immediate refetch with error handling
+      await refetch({ throwOnError: true });
+      
+      // Also invalidate to ensure cache is fresh
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      // Additional refetch after invalidation
+      await refetch({ throwOnError: true });
+      
+      toast.success(result?.message || 'Product saved successfully');
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+      toast.error('Product saved but failed to refresh the list');
+    }
   }, [closeModal, queryClient, refetch]);
 
   // ✅ Determine if we're loading
@@ -517,7 +552,7 @@ const ProductsPage = () => {
                       <tr key={product._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                               {product.images?.[0] ? (
                                 <img src={product.images[0].url} alt={product.name} className="h-full w-full object-cover" />
                               ) : (
