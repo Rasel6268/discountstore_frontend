@@ -10,9 +10,10 @@ import { DM_Sans } from "next/font/google";
 const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
+
 });
 
-// ✅ SEO Metadata (Optimized)
+
 export const metadata = {
   metadataBase: new URL("https://discountstorebd.com"),
 
@@ -26,16 +27,23 @@ export const metadata = {
 
   keywords: [
     "leather shoes",
+    "mens leather shoes",
+    "womens leather shoes",
     "leather bags",
-    "leather wallet",
+    "leather wallets",
     "premium leather",
+    "genuine leather",
+    "Bangladesh leather products",
     "handcrafted leather",
-    "genuine leather products",
+    "discount leather",
+    "online leather store",
+    "discount store",
+    "discount store bd"
   ],
 
-  authors: [{ name: "Discount Leather" }],
-  creator: "Discount Leather",
-  publisher: "Discount Leather",
+  authors: [{ name: "Discount store" }],
+  creator: "Discount store",
+  publisher: "Discount store",
 
   openGraph: {
     title: "Premium Leather Goods | Shoes, Bags & Accessories",
@@ -82,32 +90,20 @@ export const metadata = {
   category: "ecommerce",
 
   verification: {
-    google: "your-google-verification-code",
+    google: "your-google-verification-code", // Don't forget to replace this with your actual code!
   },
-
-  themeColor: "#000000",
-};
-
-// ✅ Recommended viewport export (Next.js 14+ best practice)
-export const viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={dmSans.className}>
-        
-        {/* Providers (optimized nesting order) */}
         <AuthProvider>
           <ThemeProvider>
             <Providers>
               
               {children}
 
-            
               <Toaster position="top-right" />
 
             </Providers>
