@@ -1,7 +1,5 @@
 "use client";
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { categoryApi } from "@/services/categoryApi";
 
 // 🔹 Get all categories
@@ -40,19 +38,27 @@ export const useCategory = (id) => {
 
 // ================== MUTATIONS ==================
 
-// 🔹 Create category
+// 🔹 Create MAIN category
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: categoryApi.createMainCategory,
-    onSuccess: (res) => {
-      queryClient.invalidateQueries(["categories"]);
-      queryClient.invalidateQueries(["mainCategories"]);
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["mainCategories"] });
     },
-    onError: () => {
-      
+  });
+};
+
+// 🔹 Create SUB category
+export const useCreateSubCategory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ parentId, data }) => categoryApi.createSubCategory(parentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 };
@@ -64,7 +70,8 @@ export const useUpdateCategory = () => {
   return useMutation({
     mutationFn: ({ id, data }) => categoryApi.updateCategory(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["categories"]);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["mainCategories"] });
     },
   });
 };
@@ -76,7 +83,8 @@ export const useDeleteCategory = () => {
   return useMutation({
     mutationFn: categoryApi.deleteCategory,
     onSuccess: () => {
-      queryClient.invalidateQueries(["categories"]);
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["mainCategories"] });
     },
   });
 };

@@ -1,20 +1,18 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   useCreateCategory,
+  useCreateSubCategory,
   useUpdateCategory,
   useMainCategories,
 } from "@/hooks/useCategories";
 import { 
   X, 
-  Plus, 
   Loader2, 
   FolderPlus, 
-  CheckCircle,
-  AlertCircle,
-  Trash2
+  AlertCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -34,7 +32,9 @@ const CategoryForm = ({
   const [errors, setErrors] = useState({});
 
   const { data: mainCategories = [] } = useMainCategories();
+  
   const createCategory = useCreateCategory();
+  const createSubCategory = useCreateSubCategory(); 
   const updateCategory = useUpdateCategory();
 
   useEffect(() => {
@@ -82,27 +82,37 @@ const CategoryForm = ({
       order: formData.order,
     };
 
-    // FIX: Include parentCategory in payload if it exists
-    if (formData.parentCategory) {
-      payload.parentCategory = formData.parentCategory;
-    }
-
     try {
       if (editingCategory) {
+        if (formData.parentCategory) {
+          payload.parentCategory = formData.parentCategory;
+        }
         await updateCategory.mutateAsync({ id: editingCategory._id, data: payload });
         toast.success("Category updated successfully!");
-      } else {
-        await createCategory.mutateAsync(payload);
-        toast.success("Category created successfully!");
+      } 
+      else {
+        // If parentCategory exists, we create a Subcategory
+        if (formData.parentCategory) {
+          await createSubCategory.mutateAsync({ 
+            parentId: formData.parentCategory, 
+            data: payload 
+          });
+          toast.success("Subcategory created successfully!");
+        } 
+        // If NO parentCategory, we create a Main Category
+        else {
+          await createCategory.mutateAsync(payload);
+          toast.success("Main category created successfully!");
+        }
       }
       reset();
       onSuccess?.();
     } catch (err) {
-      toast.error(err.message || "Something went wrong");
+      toast.error(err.response?.data?.message || err.message || "Something went wrong");
     }
   };
 
-  const isLoading = createCategory.isLoading || updateCategory.isLoading;
+  const isLoading = createCategory.isPending || createSubCategory.isPending || updateCategory.isPending || createCategory.isLoading || createSubCategory.isLoading || updateCategory.isLoading;
 
   return (
     <motion.div
@@ -111,13 +121,12 @@ const CategoryForm = ({
       exit={{ opacity: 0, scale: 0.95 }}
       className="bg-white rounded-2xl shadow-xl overflow-hidden"
     >
-      {/* Header */}
-      <div className="bg-linear-to-r from-purple-600 to-indigo-600 px-6 py-4">
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 text-white">
             <FolderPlus className="w-5 h-5" />
             <h2 className="text-xl font-semibold">
-              {editingCategory ? "Edit Category" : "Create New Category"}
+              {editingCategory ? "Edit Category" : formData.parentCategory ? "Create Subcategory" : "Create New Category"}
             </h2>
           </div>
           {(editingCategory || parentCategoryId) && (
@@ -131,9 +140,7 @@ const CategoryForm = ({
         </div>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
-        {/* Name Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Category Name <span className="text-red-500">*</span>
@@ -155,7 +162,6 @@ const CategoryForm = ({
           )}
         </div>
 
-        {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Description
@@ -170,11 +176,10 @@ const CategoryForm = ({
           />
         </div>
 
-        {/* Parent Category */}
         {!editingCategory && !parentCategoryId && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Parent Category
+              Parent Category (Optional)
             </label>
             <select
               name="parentCategory"
@@ -182,7 +187,7 @@ const CategoryForm = ({
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all cursor-pointer"
             >
-              <option value="">Main Category (No Parent)</option>
+              <option value="">None (Create as Main Category)</option>
               {mainCategories.map((cat) => (
                 <option key={cat._id} value={cat._id}>
                   {cat.name}
@@ -190,12 +195,11 @@ const CategoryForm = ({
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500">
-              Leave empty to create a main category
+              Select a parent to make this a subcategory.
             </p>
           </div>
         )}
 
-        {/* Display Order */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Display Order
@@ -213,17 +217,18 @@ const CategoryForm = ({
           </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
             disabled={isLoading}
-            className="flex-1 bg-linear-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
+            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="animate-spin mx-auto w-5 h-5" />
             ) : editingCategory ? (
               "Update Category"
+            ) : formData.parentCategory ? (
+              "Create Subcategory"
             ) : (
               "Create Category"
             )}
