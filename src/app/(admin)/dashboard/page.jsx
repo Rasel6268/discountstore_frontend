@@ -43,6 +43,7 @@ import Link from "next/link";
 import DashboardSkeleton from "@/components/layout/admin/DashboardSkeleton";
 import AdminRoute from "@/components/ProtectedRoute/AdminRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import RecentOrder from "@/components/admin/RecentOrder";
 
 // Sample data
 const revenueData = [
@@ -77,43 +78,7 @@ const weeklyData = [
   { day: "Sun", sales: 1980, visitors: 4800 },
 ];
 
-const recentOrders = [
-  {
-    id: "#ORD001",
-    customer: "John Doe",
-    amount: 1250,
-    status: "delivered",
-    date: "2024-12-20",
-  },
-  {
-    id: "#ORD002",
-    customer: "Jane Smith",
-    amount: 890,
-    status: "processing",
-    date: "2024-12-21",
-  },
-  {
-    id: "#ORD003",
-    customer: "Mike Johnson",
-    amount: 2100,
-    status: "pending",
-    date: "2024-12-21",
-  },
-  {
-    id: "#ORD004",
-    customer: "Sarah Williams",
-    amount: 567,
-    status: "shipped",
-    date: "2024-12-19",
-  },
-  {
-    id: "#ORD005",
-    customer: "David Brown",
-    amount: 3450,
-    status: "delivered",
-    date: "2024-12-18",
-  },
-];
+
 
 const topProducts = [
   { name: "Premium Leather Bag", sales: 245, revenue: 12250, growth: 12 },
@@ -191,22 +156,7 @@ const Dashboard = () => {
     </div>
   );
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      delivered: "bg-green-100 text-green-600",
-      processing: "bg-blue-100 text-blue-600",
-      pending: "bg-yellow-100 text-yellow-600",
-      shipped: "bg-purple-100 text-purple-600",
-      cancelled: "bg-red-100 text-red-600",
-    };
-    return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[status]}`}
-      >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
-  };
+  
 
   // Custom Tooltip for charts
   const CustomTooltip = ({ active, payload, label }) => {
@@ -555,84 +505,13 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Orders Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">
-                Recent Orders
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                Latest transactions from your store
-              </p>
-            </div>
-            <Link
-              href="/orders"
-              className="text-amber-600 text-sm hover:text-amber-700 font-medium"
-            >
-              View All Orders →
-            </Link>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {recentOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {order.customer}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">
-                    ৳{order.amount.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(order.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.date}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-amber-600 hover:text-amber-700 font-medium">
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <RecentOrder></RecentOrder>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link
           href="/products/add"
-          className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
+          className="bg-linear-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
         >
           <div className="flex items-center justify-between">
             <div>

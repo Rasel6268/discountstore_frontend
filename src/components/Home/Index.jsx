@@ -168,56 +168,6 @@ const Home = () => {
       toast.error("Failed to add to cart");
     }
   };
-
-  const discountProduct = [
-    {
-      title: "Women's Pant",
-      regularPrice: "400",
-      discountPrice: "300",
-      percentage: "25",
-      review: 4.5,
-      totalReview: 120,
-      image:
-        "https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1782069862/IMG-20260616-WA0049_s8czlv.jpg",
-    },
-    {
-      title: "Men's T-Shirt",
-      regularPrice: "800",
-      discountPrice: "600",
-      percentage: "25",
-      review: 4.8,
-      totalReview: 245,
-      image: "/images/products/tshirt.jpg",
-    },
-    {
-      title: "Running Shoes",
-      regularPrice: "2500",
-      discountPrice: "2000",
-      percentage: "20",
-      review: 4.7,
-      totalReview: 189,
-      image: "/images/products/shoes.jpg",
-    },
-    {
-      title: "Leather Handbag",
-      regularPrice: "1500",
-      discountPrice: "1200",
-      percentage: "20",
-      review: 4.4,
-      totalReview: 98,
-      image: "/images/products/bag.jpg",
-    },
-    {
-      title: "Smart Watch",
-      regularPrice: "3500",
-      discountPrice: "2800",
-      percentage: "20",
-      review: 4.9,
-      totalReview: 312,
-      image: "/images/products/watch.jpg",
-    },
-  ];
-
   const handleCategoryClick = (categoryId, categoryName) => {
     if (categoryId && categoryName) {
       router.push(
@@ -328,7 +278,6 @@ const Home = () => {
       },
     ],
   };
-  console.log(bestProducts);
 
   return (
     <section className="bg-amber-50/30">
@@ -351,7 +300,7 @@ const Home = () => {
                       key={index}
                       className={`flex justify-between items-center rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer ${
                         category.active
-                          ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg"
+                          ? "bg-linear-to-r from-amber-500 to-amber-600 text-white shadow-lg"
                           : "bg-amber-800/50 text-amber-100 shadow-md hover:bg-amber-700/70 hover:shadow-lg"
                       }`}
                       onClick={() => {
@@ -377,7 +326,7 @@ const Home = () => {
                   ))}
                 </ul>
 
-                <div className="mt-6 bg-gradient-to-br from-amber-600 to-amber-700 rounded-2xl p-5 text-white text-center shadow-xl border border-amber-500">
+                <div className="mt-6 bg-linear-to-br from-amber-600 to-amber-700 rounded-2xl p-5 text-white text-center shadow-xl border border-amber-500">
                   <FaGift className="text-3xl mx-auto mb-2 text-amber-300" />
                   <h3 className="font-bold text-lg">Eid Special Offer! 🎉</h3>
                   <p className="text-sm mt-1 text-amber-100">
@@ -423,7 +372,9 @@ const Home = () => {
                               style={{ height: "160px" }}
                             >
                               <Image
-                                src={product.images?.[0]?.url || "/placeholder.png"}
+                                src={
+                                  product.images?.[0]?.url || "/placeholder.png"
+                                }
                                 alt={product.title}
                                 width={300}
                                 height={150}
@@ -454,12 +405,6 @@ const Home = () => {
                                         </span>
                                       </div>
                                     </div>
-                                    <Link
-                                      href={`/shop/${product._id}`}
-                                      className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 transform hover:scale-105"
-                                    >
-                                      Details
-                                    </Link>
                                   </div>
                                 </div>
                               </div>
@@ -477,7 +422,14 @@ const Home = () => {
                                       <FaStar
                                         key={star}
                                         className={`${
-                                          star < Math.floor(product.reviews.reduce((sum,review) => sum + review.rating,0) / product.reviews.length )
+                                          star <
+                                          Math.floor(
+                                            product.reviews.reduce(
+                                              (sum, review) =>
+                                                sum + review.rating,
+                                              0,
+                                            ) / product.reviews.length,
+                                          )
                                             ? "text-amber-400"
                                             : "text-amber-200"
                                         } text-[10px]`}
@@ -491,12 +443,12 @@ const Home = () => {
                               </div>
 
                               <button
-                                onClick={() => {
-                                  toast.success(
-                                    `${product.title} added to cart!`,
-                                  );
-                                }}
-                                className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-2 rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all duration-300 cursor-pointer flex-shrink-0 hover:scale-110 active:scale-95"
+                                onClick={() => handleAddToCart(product)}
+                                disabled={
+                                  product.trackInventory &&
+                                  product.quantity === 0
+                                }
+                                className="bg-linear-to-r from-amber-600 to-amber-700 text-white p-2 rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all duration-300 cursor-pointer flex-shrink-0 hover:scale-110 active:scale-95"
                               >
                                 <FaShoppingCart size={14} />
                               </button>
@@ -525,9 +477,11 @@ const Home = () => {
                         {discounts.map((discount, index) => (
                           <div
                             key={discount._id}
-                            className="min-w-full h-full flex-shrink-0"
+                            className="min-w-full h-full shrink-0"
                           >
-                            <div className={`bg-gradient-to-r ${getDiscountGradient(discount.offerType)} rounded-2xl shadow-xl p-6 text-white relative overflow-hidden h-full`}>
+                            <div
+                              className={`bg-linear-to-r ${getDiscountGradient(discount.offerType)} rounded-2xl shadow-xl p-6 text-white relative overflow-hidden h-full`}
+                            >
                               {/* Background Decoration */}
                               <div className="absolute top-0 right-0 opacity-10">
                                 <FaGift className="text-8xl" />
@@ -611,13 +565,20 @@ const Home = () => {
                                       <div className="flex items-center gap-2">
                                         <FaClock className="text-white/70 shrink-0 animate-pulse" />
                                         <div className="flex gap-1.5">
-                                          {["days", "hours", "minutes", "seconds"].map((unit) => (
+                                          {[
+                                            "days",
+                                            "hours",
+                                            "minutes",
+                                            "seconds",
+                                          ].map((unit) => (
                                             <div
                                               key={unit}
                                               className="bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1 text-center min-w-[36px]"
                                             >
                                               <span className="text-base font-bold">
-                                                {String(timeRemaining[index][unit]).padStart(2, "0")}
+                                                {String(
+                                                  timeRemaining[index][unit],
+                                                ).padStart(2, "0")}
                                               </span>
                                               <span className="text-[8px] block opacity-70 leading-tight capitalize">
                                                 {unit}
@@ -682,7 +643,7 @@ const Home = () => {
                     </div>
                   ) : (
                     // Fallback static offer
-                    <div className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden h-full">
+                    <div className="bg-linear-to-r from-amber-600 to-amber-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden h-full">
                       <div className="absolute top-0 right-0 opacity-10">
                         <FaGift className="text-8xl" />
                       </div>
@@ -697,7 +658,8 @@ const Home = () => {
                           Eid-ul-Fitr Mega Sale
                         </h3>
                         <p className="text-amber-100 mb-4">
-                          Get up to 50% off on fusion leather collection + Free Gift
+                          Get up to 50% off on fusion leather collection + Free
+                          Gift
                         </p>
                         <div className="flex items-center gap-3 mb-4">
                           <div className="text-center">
@@ -748,7 +710,8 @@ const Home = () => {
               🔥 Fusion Leather Collection
             </h2>
             <p className="text-amber-600 max-w-2xl mx-auto">
-              Handcrafted with premium leather • Modern fusion designs • Limited edition
+              Handcrafted with premium leather • Modern fusion designs • Limited
+              edition
             </p>
           </div>
 
@@ -805,7 +768,10 @@ const Home = () => {
                     </div>
                     {product.regularPrice > product.discountPrice && (
                       <span className="text-xs line-through text-amber-400">
-                        <FaBangladeshiTakaSign size={10} className="inline mr-0.5" />
+                        <FaBangladeshiTakaSign
+                          size={10}
+                          className="inline mr-0.5"
+                        />
                         {product.regularPrice?.toLocaleString()}
                       </span>
                     )}
@@ -817,7 +783,7 @@ const Home = () => {
                     className={`mt-auto w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                       product.trackInventory && product.quantity === 0
                         ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
+                        : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
                     }`}
                   >
                     {product.trackInventory && product.quantity === 0
@@ -876,7 +842,7 @@ const Home = () => {
       </div>
 
       {/* Special Occasion Discount Banner */}
-      <div className="py-12 bg-gradient-to-r from-amber-800 to-amber-900">
+      <div className="py-12 bg-linear-to-r from-amber-800 to-amber-900">
         <div className="w-11/12 mx-auto">
           <div className="text-center text-white mb-8">
             <FaGift className="text-5xl mx-auto mb-4 text-amber-400" />
@@ -989,7 +955,10 @@ const Home = () => {
                     </div>
                     {product.regularPrice > product.discountPrice && (
                       <span className="text-xs line-through text-amber-400">
-                        <FaBangladeshiTakaSign size={10} className="inline mr-0.5" />
+                        <FaBangladeshiTakaSign
+                          size={10}
+                          className="inline mr-0.5"
+                        />
                         {product.regularPrice?.toLocaleString()}
                       </span>
                     )}
@@ -1013,7 +982,7 @@ const Home = () => {
                       className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
                         product.trackInventory && product.quantity === 0
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-gradient-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
+                          : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
                       }`}
                     >
                       {product.trackInventory && product.quantity === 0
@@ -1072,7 +1041,7 @@ const Home = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 sm:gap-0">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold flex items-center gap-3 text-amber-900">
-                <span className="w-3 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></span>
+                <span className="w-3 h-8 bg-linear-to-b from-amber-500 to-amber-600 rounded-full"></span>
                 Special Discount Offers
               </h2>
               <p className="text-amber-600 mt-2">
@@ -1149,7 +1118,10 @@ const Home = () => {
                       </span>
                       {product.regularPrice > product.discountPrice && (
                         <span className="text-[10px] line-through text-amber-400">
-                          <FaBangladeshiTakaSign size={8} className="inline mr-0.5" />
+                          <FaBangladeshiTakaSign
+                            size={8}
+                            className="inline mr-0.5"
+                          />
                           {product.regularPrice?.toLocaleString()}
                         </span>
                       )}
@@ -1163,7 +1135,7 @@ const Home = () => {
                       className={`${
                         product.trackInventory && product.quantity === 0
                           ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
+                          : "bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
                       } text-white p-1.5 rounded-lg transition`}
                     >
                       <FaShoppingCart className="text-xs" />

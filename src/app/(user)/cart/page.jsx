@@ -547,7 +547,7 @@ const CartPage = () => {
                                     )
                                   }
                                   disabled={isItemUpdating}
-                                  className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                 >
                                   <FaMinus className="text-xs text-gray-600" />
                                 </button>
@@ -568,7 +568,7 @@ const CartPage = () => {
                                     )
                                   }
                                   disabled={isItemUpdating}
-                                  className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                 >
                                   <FaPlus className="text-xs text-gray-600" />
                                 </button>
@@ -595,7 +595,7 @@ const CartPage = () => {
                                 <button
                                   onClick={() => handleSaveForLater(item)}
                                   disabled={isItemUpdating}
-                                  className="p-2 text-gray-500 hover:text-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="p-2 text-gray-500 hover:text-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                   title="Save for later"
                                 >
                                   <svg
@@ -660,7 +660,7 @@ const CartPage = () => {
                         toast.success("Cart cleared");
                       }
                     }}
-                    className="text-red-600 hover:text-red-700 font-medium transition"
+                    className="text-red-600 hover:text-red-700 font-medium transition cursor-pointer"
                   >
                     Clear Cart
                   </button>
@@ -725,7 +725,7 @@ const CartPage = () => {
                         </div>
                         <button
                           onClick={() => handleMoveToCart(item)}
-                          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition text-sm"
+                          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition text-sm cursor-pointer"
                         >
                           Move to Cart
                         </button>
@@ -756,7 +756,7 @@ const CartPage = () => {
 
                   {/* Coupon Code Section */}
                   <div className="pt-2">
-                    <label className="block text-sm text-gray-600 mb-2 flex items-center gap-2">
+                    <label className="block text-sm text-gray-600 mb-2 items-center gap-2">
                       <FaTag className="text-amber-500" />
                       Coupon Code
                     </label>
@@ -797,7 +797,7 @@ const CartPage = () => {
                           </div>
                           <button
                             onClick={handleRemoveCoupon}
-                            className="text-red-500 hover:text-red-700 transition p-1"
+                            className="text-red-500 hover:text-red-700 transition p-1 cursor-pointer"
                             title="Remove coupon"
                           >
                             <FaTimes />
@@ -820,7 +820,7 @@ const CartPage = () => {
                         <button
                           onClick={handleApplyCoupon}
                           disabled={couponLoading || !couponCode}
-                          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                         >
                           {couponLoading ? (
                             <FaSpinner className="animate-spin" />
@@ -866,7 +866,7 @@ const CartPage = () => {
                   <button
                     onClick={handleCheckout}
                     disabled={isProcessing || cartItems.length === 0}
-                    className="w-full py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isProcessing ? (
                       <>

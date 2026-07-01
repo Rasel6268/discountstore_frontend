@@ -26,7 +26,6 @@ import toast from "react-hot-toast";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/AuthProvider/AuthProvider";
 import api from "@/config/api";
-import ProtectedRoute from "@/components/ProtectedRoute";
 
 const CheckoutPage = () => {
   const router = useRouter();
@@ -722,7 +721,7 @@ const CheckoutPage = () => {
   );
 
   return (
-    <ProtectedRoute>
+   
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 md:py-12">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Progress Steps */}
@@ -1558,7 +1557,7 @@ const CheckoutPage = () => {
 
         {showAddAddressModal && <AddressModal />}
       </div>
-    </ProtectedRoute>
+  
   );
 };
 
