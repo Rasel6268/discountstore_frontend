@@ -12,8 +12,8 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
   const [openUserModel, setOpenUserModel] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const userModelRef = useRef(null);
-  const { logout } = useAuth();
-  const router = useRouter(); // ✅ Add this line
+  const { logout,user } = useAuth();
+  const router = useRouter(); 
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -81,7 +81,7 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
           <Link href="/dashboard" className="flex items-center gap-2 group">
             <div className="hidden sm:block">
               <span className="text-sm font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-                DiscountMart
+                DiscountStore
               </span>
               <p className="text-[10px] text-amber-500">Admin Panel</p>
             </div>
@@ -143,8 +143,8 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
                     className="w-12 h-12 rounded-full object-cover border-2 border-amber-500" 
                   />
                   <div>
-                    <h2 className="font-semibold text-white">Admin User</h2>
-                    <p className="text-sm text-gray-400">admin@aisdiscountmart.com</p>
+                    <h2 className="font-semibold text-white">{user.name}</h2>
+                    <p className="text-sm text-gray-400">{user.email}</p>
                     <span className="text-xs text-green-400 flex items-center gap-1 mt-1">
                       <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                       Active
@@ -153,18 +153,11 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
                 </div>
                 <div className="py-2">
                   <Link 
-                    href="/dashboard/profile" 
+                    href="/profile" 
                     className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition"
                     onClick={() => setOpenUserModel(false)}
                   >
                     <User className="w-5 h-5" /> Profile
-                  </Link>
-                  <Link 
-                    href="/dashboard/settings" 
-                    className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition"
-                    onClick={() => setOpenUserModel(false)}
-                  >
-                    <Settings className="w-5 h-5" /> Settings
                   </Link>
                   <button 
                     className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/20 w-full transition"

@@ -148,6 +148,7 @@ const navigation = [
  
 ];
 
+
 export default function Sidebar({
   isOpen,
   isMobileOpen,
@@ -367,25 +368,7 @@ export default function Sidebar({
           </div>
         </nav>
 
-        {/* Logout Button - Sticky Bottom */}
-        <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900/95 backdrop-blur-sm">
-          <button
-            className={`
-              flex items-center rounded-lg transition-all duration-300 w-full
-              ${isOpen ? "gap-3 px-4 py-2.5" : "lg:justify-center lg:px-2 lg:py-3"}
-              text-gray-400 hover:bg-red-500/20 hover:text-red-400
-            `}
-            title={!isOpen ? "Logout" : ""}
-          >
-            <HiOutlineLogout className="text-lg" />
-            {isOpen && <span className="text-sm font-medium">Logout</span>}
-          </button>
-          {isOpen && (
-            <p className="text-center text-[10px] text-gray-600 mt-2">
-              © 2024 AIS DiscountMart
-            </p>
-          )}
-        </div>
+       
 
         {/* Collapse Toggle Button - Desktop only */}
         <button
