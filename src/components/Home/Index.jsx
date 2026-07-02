@@ -361,100 +361,125 @@ const Home = () => {
                   <div className="flex-1 min-h-0">
                     <div className="h-full">
                       <Slider {...productSliderSettings}>
-                        {bestProducts?.map((product, index) => (
-                          <div
-                            key={index}
-                            className="bg-amber-50 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 group flex flex-col h-full relative"
-                          >
-                            {/* Image Container */}
+                        {bestProducts?.map((product, index) => {
+                          const averageRating =
+                            product.reviews?.length > 0
+                              ? product.reviews.reduce(
+                                  (sum, r) => sum + r.rating,
+                                  0,
+                                ) / product.reviews.length
+                              : 0;
+                          const isOutOfStock =
+                            product.trackInventory && product.quantity === 0;
+
+                          return (
                             <div
-                              className="w-full relative overflow-hidden shrink-0 cursor-pointer"
-                              style={{ height: "160px" }}
+                              key={product._id}
+                              className="bg-amber-50 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 group flex flex-col h-full relative"
                             >
-                              <Image
-                                src={
-                                  product.images?.[0]?.url || "/placeholder.png"
-                                }
-                                alt={product.title}
-                                width={300}
-                                height={150}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                              />
+                              {/* Image Container */}
+                              <div
+                                className="w-full relative overflow-hidden shrink-0 cursor-pointer"
+                                style={{ height: "160px" }}
+                              >
+                                <Link href={`/shop/${product._id}`}>
+                                  <Image
+                                    src={
+                                      product.images?.[0]?.url ||
+                                      "/placeholder.png"
+                                    }
+                                    alt={product.name || "Product"}
+                                    width={300}
+                                    height={150}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    priority={index < 3}
+                                    loading={index < 3 ? "eager" : "lazy"}
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                  />
+                                </Link>
 
-                              {/* Discount Badge */}
-                              <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                                -{product.discountPercentage}%
-                              </div>
+                                {/* Discount Badge */}
+                                {product.discountPercentage > 0 && (
+                                  <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                                    -{product.discountPercentage}%
+                                  </div>
+                                )}
 
-                              {/* Price Card that slides up from bottom on hover */}
-                              <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                                <div className="text-white">
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <p className="text-xs opacity-80">
-                                        Price
-                                      </p>
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-bold text-lg flex items-center gap-1">
-                                          <FaBangladeshiTakaSign size={14} />
-                                          {product.discountPrice}
-                                        </span>
-                                        <span className="text-gray-400 text-sm line-through flex items-center gap-0.5">
-                                          <FaBangladeshiTakaSign size={10} />
-                                          {product.regularPrice}
-                                        </span>
+                                {/* Out of Stock Badge */}
+                                {isOutOfStock && (
+                                  <div className="absolute top-2 left-2 bg-gray-700 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                    Out of Stock
+                                  </div>
+                                )}
+
+                                {/* Price Card */}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                                  <div className="text-white">
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <p className="text-xs opacity-80">
+                                          Price
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-bold text-lg flex items-center gap-1">
+                                            <FaBangladeshiTakaSign size={14} />
+                                            {product.discountPrice ||
+                                              product.regularPrice}
+                                          </span>
+                                          {product.discountPrice && (
+                                            <span className="text-gray-400 text-sm line-through flex items-center gap-0.5">
+                                              <FaBangladeshiTakaSign
+                                                size={10}
+                                              />
+                                              {product.regularPrice}
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Product Info */}
-                            <div className="p-3 flex justify-between items-center">
-                              <div>
-                                <h3 className="font-semibold text-amber-900 text-sm line-clamp-1">
-                                  {product.name}
-                                </h3>
-                                <div className="flex items-center gap-1 mt-0.5">
-                                  <div className="flex gap-0.5">
-                                    {[...Array(5)].map((_, star) => (
-                                      <FaStar
-                                        key={star}
-                                        className={`${
-                                          star <
-                                          Math.floor(
-                                            product.reviews.reduce(
-                                              (sum, review) =>
-                                                sum + review.rating,
-                                              0,
-                                            ) / product.reviews.length,
-                                          )
-                                            ? "text-amber-400"
-                                            : "text-amber-200"
-                                        } text-[10px]`}
-                                      />
-                                    ))}
+                              {/* Product Info */}
+                              <div className="p-3 flex justify-between items-center">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-semibold text-amber-900 text-sm line-clamp-1">
+                                    {product.name}
+                                  </h3>
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    <div className="flex gap-0.5">
+                                      {[...Array(5)].map((_, star) => (
+                                        <FaStar
+                                          key={star}
+                                          className={`${
+                                            star < Math.round(averageRating)
+                                              ? "text-amber-400"
+                                              : "text-amber-200"
+                                          } text-[10px]`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-[10px] text-amber-500">
+                                      ({product.totalReviews || 0})
+                                    </span>
                                   </div>
-                                  <span className="text-[10px] text-amber-500">
-                                    ({product.totalReviews})
-                                  </span>
                                 </div>
-                              </div>
 
-                              <button
-                                onClick={() => handleAddToCart(product)}
-                                disabled={
-                                  product.trackInventory &&
-                                  product.quantity === 0
-                                }
-                                className="bg-linear-to-r from-amber-600 to-amber-700 text-white p-2 rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all duration-300 cursor-pointer flex-shrink-0 hover:scale-110 active:scale-95"
-                              >
-                                <FaShoppingCart size={14} />
-                              </button>
+                                <button
+                                  onClick={() =>
+                                    !isOutOfStock && handleAddToCart(product)
+                                  }
+                                  disabled={isOutOfStock}
+                                  aria-label={`Add ${product.name} to cart`}
+                                  className="bg-linear-to-r from-amber-600 to-amber-700 text-white p-2 rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all duration-300 cursor-pointer flex-shrink-0 hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-2"
+                                >
+                                  <FaShoppingCart size={14} />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </Slider>
                     </div>
                   </div>
