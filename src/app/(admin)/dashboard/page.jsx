@@ -1,45 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-  FaDollarSign,
+  
   FaShoppingCart,
   FaUsers,
   FaBoxes,
   FaArrowUp,
   FaArrowDown,
-  FaStar,
-  FaTruck,
   FaRegClock,
-  FaEye,
   FaWallet,
-  FaChartLine,
 } from "react-icons/fa";
 import {
   MdOutlineAttachMoney,
-  MdTrendingUp,
-  MdOutlineShoppingBag,
 } from "react-icons/md";
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  ComposedChart,
-} from "recharts";
-import Link from "next/link";
+
 import DashboardSkeleton from "@/components/layout/admin/DashboardSkeleton";
 import AdminRoute from "@/components/ProtectedRoute/AdminRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -47,49 +21,10 @@ import RecentOrder from "@/components/admin/RecentOrder";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/config/api";
 
-// Sample data (consider moving to separate file or API)
-const revenueData = [
-  { month: "Jan", revenue: 12500, orders: 450, profit: 3750 },
-  { month: "Feb", revenue: 15200, orders: 520, profit: 4560 },
-  { month: "Mar", revenue: 18900, orders: 680, profit: 5670 },
-  { month: "Apr", revenue: 16800, orders: 590, profit: 5040 },
-  { month: "May", revenue: 21000, orders: 720, profit: 6300 },
-  { month: "Jun", revenue: 23500, orders: 850, profit: 7050 },
-  { month: "Jul", revenue: 27800, orders: 980, profit: 8340 },
-  { month: "Aug", revenue: 25600, orders: 910, profit: 7680 },
-  { month: "Sep", revenue: 29800, orders: 1050, profit: 8940 },
-  { month: "Oct", revenue: 32400, orders: 1180, profit: 9720 },
-  { month: "Nov", revenue: 35600, orders: 1320, profit: 10680 },
-  { month: "Dec", revenue: 42500, orders: 1580, profit: 12750 },
-];
-
-const categoryData = [
-  { name: "Leather Bags", value: 45, color: "#f59e0b", sales: 1120 },
-  { name: "Fusion Handbags", value: 28, color: "#ec4899", sales: 680 },
-  { name: "Men's Wallets", value: 15, color: "#06b6d4", sales: 420 },
-  { name: "Leather Jackets", value: 12, color: "#8b5cf6", sales: 290 },
-];
-
-const weeklyData = [
-  { day: "Mon", sales: 1250, visitors: 3200 },
-  { day: "Tue", sales: 1450, visitors: 3500 },
-  { day: "Wed", sales: 1680, visitors: 3800 },
-  { day: "Thu", sales: 1820, visitors: 4100 },
-  { day: "Fri", sales: 2100, visitors: 4500 },
-  { day: "Sat", sales: 2350, visitors: 5200 },
-  { day: "Sun", sales: 1980, visitors: 4800 },
-];
-
-const topProducts = [
-  { name: "Premium Leather Bag", sales: 245, revenue: 12250, growth: 12 },
-  { name: "Fusion Handbag", sales: 189, revenue: 9450, growth: 8 },
-  { name: "Men's Leather Wallet", sales: 156, revenue: 4680, growth: 15 },
-  { name: "Leather Jacket", sales: 98, revenue: 24500, growth: 5 },
-];
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState("year");
+
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalProducts: 0,
@@ -101,7 +36,7 @@ const Dashboard = () => {
     conversionRate: 0,
   });
 
-  // API Queries
+ 
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["users"],
     queryFn: async () => {
@@ -109,6 +44,7 @@ const Dashboard = () => {
       return res.data.users;
     },
   });
+
   const totalUsers = users?.filter((item) => item.role === "user").length
  
   
@@ -120,18 +56,18 @@ const Dashboard = () => {
       return res.data.data;
     },
   });
-  console.log(users);
+
   
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products"], // ✅ Fixed unique key
+    queryKey: ["products"], 
     queryFn: async () => {
       const res = await api.get("/products");
       return res.data;
     },
   });
 
-  // Calculate real stats from API data
+  
   useEffect(() => {
     if (users && ordersData && productsData) {
       const completedOrders = ordersData.filter(order => order.orderStatus === "delivered");
@@ -190,25 +126,10 @@ const Dashboard = () => {
     </div>
   );
 
-  // Custom Tooltip for charts
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-semibold text-gray-800">{label}</p>
-          {payload.map((p, index) => (
-            <p key={index} className="text-sm" style={{ color: p.color }}>
-              {p.name}: ৳{p.value.toLocaleString()}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+ 
 
   return (
-    <ProtectedRoute>
+    <AdminRoute>
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex justify-between items-center">
@@ -301,15 +222,14 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Charts Section - Add rest of your charts here */}
-        {/* ... (keep all your existing chart code) */}
+    
 
         {/* Recent Orders Table */}
         <RecentOrder />
 
       
       </div>
-    </ProtectedRoute>
+    </AdminRoute>
   );
 };
 
