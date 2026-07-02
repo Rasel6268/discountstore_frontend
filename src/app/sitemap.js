@@ -1,15 +1,18 @@
-export default function sitemap(){
-    return [
-        {
-            url: "https://discountstore.com",
-            lastModified: new Date(),
-            priority: 1,
-        },
+export default function sitemap() {
+  const baseUrl = "https://discountstorebd.com";
 
-        {
-            url: "https://discountstore.com/shop",
-            lastModified: new Date(),
-            priority: 0.9,
-        },
-    ];
+  return [
+    {
+      url: `${baseUrl}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 1,
+    },
+    {
+      url: `${baseUrl}/shop`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+  ];
 }
