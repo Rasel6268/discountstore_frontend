@@ -31,6 +31,211 @@ import ProductForm from "@/components/product/ProductForm";
 import api from "@/config/api";
 import AdminRoute from "@/components/ProtectedRoute/AdminRoute";
 
+// Pagination Component with ellipsis
+const Pagination = ({ 
+  currentPage, 
+  totalPages, 
+  totalItems, 
+  itemsPerPage, 
+  onPageChange,
+  siblingCount = 1
+}) => {
+  // Generate page numbers with ellipsis
+  const generatePagination = () => {
+    const pages = [];
+    const totalPageNumbers = siblingCount * 2 + 3; // siblings + first + last + current
+
+    if (totalPages <= totalPageNumbers) {
+      // Show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
+      const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
+
+      const shouldShowLeftEllipsis = leftSiblingIndex > 2;
+      const shouldShowRightEllipsis = rightSiblingIndex < totalPages - 1;
+
+      if (shouldShowLeftEllipsis && shouldShowRightEllipsis) {
+        // Show: 1 ... 4 5 6 ... last
+        pages.push(1);
+        pages.push('...');
+        for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (shouldShowLeftEllipsis) {
+        // Show: 1 ... 4 5 6 7 8
+        pages.push(1);
+        pages.push('...');
+        for (let i = leftSiblingIndex; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else if (shouldShowRightEllipsis) {
+        // Show: 1 2 3 4 5 ... last
+        for (let i = 1; i <= rightSiblingIndex; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const paginationRange = generatePagination();
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-200">
+      {/* Left side - Items info */}
+      <div className="text-sm text-gray-700">
+        Showing <span className="font-medium">
+          {totalItems === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1}
+        </span> to{' '}
+        <span className="font-medium">
+          {Math.min(currentPage * itemsPerPage, totalItems)}
+        </span> of{' '}
+        <span className="font-medium">{totalItems}</span> products
+      </div>
+
+      {/* Right side - Pagination buttons */}
+      <div className="flex items-center gap-1">
+        {/* Previous button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Previous</span>
+        </button>
+
+        {/* Page numbers */}
+        <div className="flex items-center gap-1">
+          {paginationRange.map((page, index) => {
+            if (page === '...') {
+              return (
+                <span
+                  key={`ellipsis-${index}`}
+                  className="px-3 py-2 text-sm text-gray-500"
+                >
+                  …
+                </span>
+              );
+            }
+
+            return (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                className={`relative inline-flex items-center px-4 py-2 text-sm font-medium border rounded-md transition-colors cursor-pointer ${
+                  currentPage === page
+                    ? 'z-10 bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {page}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Next button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        >
+          <span className="hidden sm:inline mr-1">Next</span>
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Quick Pagination Component with jump to page
+const QuickPagination = ({ 
+  currentPage, 
+  totalPages, 
+  onPageChange,
+  totalItems,
+  itemsPerPage
+}) => {
+  const [jumpToPage, setJumpToPage] = useState('');
+
+  const handleJumpToPage = (e) => {
+    e.preventDefault();
+    const page = parseInt(jumpToPage);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      onPageChange(page);
+      setJumpToPage('');
+    }
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-200">
+      <div className="text-sm text-gray-700">
+        Showing <span className="font-medium">
+          {totalItems === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1}
+        </span> to{' '}
+        <span className="font-medium">
+          {Math.min(currentPage * itemsPerPage, totalItems)}
+        </span> of{' '}
+        <span className="font-medium">{totalItems}</span> products
+      </div>
+
+      <div className="flex items-center gap-2">
+        {/* Previous button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </button>
+
+        {/* Page info with jump to page */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-700">Page</span>
+          <input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={jumpToPage}
+            onChange={(e) => setJumpToPage(e.target.value)}
+            onBlur={handleJumpToPage}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleJumpToPage(e);
+              }
+            }}
+            className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder={currentPage}
+          />
+          <span className="text-sm text-gray-700">of {totalPages}</span>
+        </div>
+
+        {/* Next button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors flex items-center gap-1"
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProductsPage = () => {
   const queryClient = useQueryClient();
 
@@ -56,6 +261,7 @@ const ProductsPage = () => {
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Use products with proper configuration
   const { data, isLoading, error, refetch, isRefetching, isFetching, isError } =
@@ -69,14 +275,13 @@ const ProductsPage = () => {
   const { data: brandsData = [] } = useBrands();
   const deleteProduct = useDeleteProduct();
 
-  // ✅ Safely extract data with fallbacks
   const products = data?.data || data?.products || [];
   const pagination = data?.pagination ||
     data?.meta || {
       total: products.length,
-      page: 1,
-      limit: 10,
-      pages: Math.ceil(products.length / 10) || 1,
+      page: filters.page || 1,
+      limit: filters.limit || 10,
+      pages: Math.ceil(products.length / (filters.limit || 10)) || 1,
     };
 
   const categories = Array.isArray(categoriesData) ? categoriesData : [];
@@ -133,9 +338,9 @@ const ProductsPage = () => {
       isBest: "",
       isFeatured: "",
       page: 1,
-      limit: 10,
+      limit: filters.limit || 10,
     });
-  }, []);
+  }, [filters.limit]);
 
   // Enhanced refresh function
   const handleRefresh = useCallback(async () => {
@@ -213,6 +418,24 @@ const ProductsPage = () => {
     setSelectedProduct(null);
     setShowProductForm(false);
     setEditingProduct(null);
+  }, []);
+
+  // Handle page change with smooth scroll
+  const handlePageChange = useCallback((newPage) => {
+    if (newPage >= 1 && newPage <= (pagination.pages || 1)) {
+      setFilters(prev => ({ ...prev, page: newPage }));
+      // Scroll to top of table
+      const tableContainer = document.querySelector('.product-table-container');
+      if (tableContainer) {
+        tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [pagination.pages]);
+
+  // Handle items per page change
+  const handleItemsPerPageChange = useCallback((newLimit) => {
+    setFilters(prev => ({ ...prev, limit: newLimit, page: 1 }));
+    setItemsPerPage(newLimit);
   }, []);
 
   const getStatusBadge = useCallback((status) => {
@@ -311,7 +534,7 @@ const ProductsPage = () => {
     [closeModal, queryClient, refetch],
   );
 
-  // ✅ Determine if we're loading
+  // Determine if we're loading
   const isLoadingData = isLoading || isFetching || isRefetching || isRefreshing;
 
   return (
@@ -389,6 +612,7 @@ const ProductsPage = () => {
                   filters.brand ||
                   filters.status ||
                   filters.minPrice ||
+                  filters.maxPrice ||
                   filters.isOnSale ||
                   filters.isPremium ||
                   filters.isBest ||
@@ -550,7 +774,7 @@ const ProductsPage = () => {
           </div>
 
           {/* Products Table */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden product-table-container">
             {isLoadingData && !products.length ? (
               <div className="flex justify-center items-center py-20">
                 <Loader2 className="animate-spin text-blue-600" size={48} />
@@ -589,6 +813,33 @@ const ProductsPage = () => {
               </div>
             ) : (
               <>
+                {/* Items per page selector */}
+                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-200 gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-700">Show:</span>
+                    <select
+                      value={filters.limit || itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                      className="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span className="text-sm text-gray-500">per page</span>
+                  </div>
+                  
+                  {pagination.pages > 1 && (
+                    <div className="text-sm text-gray-500">
+                      Page <span className="font-medium">{filters.page}</span> of{' '}
+                      <span className="font-medium">{pagination.pages}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Table */}
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -780,71 +1031,26 @@ const ProductsPage = () => {
                   </table>
                 </div>
 
-                {/* Pagination */}
-                {pagination.pages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-                    <div className="text-sm text-gray-500">
-                      Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                      {Math.min(
-                        pagination.page * pagination.limit,
-                        pagination.total,
-                      )}{" "}
-                      of {pagination.total} products
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          handleFilterChange("page", filters.page - 1)
-                        }
-                        disabled={filters.page === 1}
-                        className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white cursor-pointer"
-                      >
-                        Previous
-                      </button>
-                      <div className="flex gap-1">
-                        {[...Array(Math.min(5, pagination.pages))].map(
-                          (_, i) => {
-                            let pageNum;
-                            if (pagination.pages <= 5) {
-                              pageNum = i + 1;
-                            } else if (filters.page <= 3) {
-                              pageNum = i + 1;
-                            } else if (filters.page >= pagination.pages - 2) {
-                              pageNum = pagination.pages - 4 + i;
-                            } else {
-                              pageNum = filters.page - 2 + i;
-                            }
+                {/* Improved Pagination - Choose one of these */}
+                
+                {/* Option 1: Full featured pagination with ellipsis */}
+                <Pagination
+                  currentPage={filters.page}
+                  totalPages={pagination.pages || 1}
+                  totalItems={pagination.total || products.length}
+                  itemsPerPage={filters.limit || itemsPerPage}
+                  onPageChange={handlePageChange}
+                  siblingCount={1}
+                />
 
-                            return (
-                              <button
-                                key={pageNum}
-                                onClick={() =>
-                                  handleFilterChange("page", pageNum)
-                                }
-                                className={`px-3 py-1 border rounded-md cursor-pointer ${
-                                  filters.page === pageNum
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "border-gray-300 hover:bg-white"
-                                }`}
-                              >
-                                {pageNum}
-                              </button>
-                            );
-                          },
-                        )}
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleFilterChange("page", filters.page + 1)
-                        }
-                        disabled={filters.page === pagination.pages}
-                        className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white cursor-pointer"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Option 2: Quick pagination with jump to page */}
+                {/* <QuickPagination
+                  currentPage={filters.page}
+                  totalPages={pagination.pages || 1}
+                  totalItems={pagination.total || products.length}
+                  itemsPerPage={filters.limit || itemsPerPage}
+                  onPageChange={handlePageChange}
+                /> */}
               </>
             )}
           </div>

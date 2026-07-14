@@ -86,7 +86,7 @@ export default function DiscountsListPage() {
           </button>
 
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-red-50 rounded-full flex items-center justify-center">
+            <div className="shrink-0 w-12 h-12 bg-red-50 rounded-full flex items-center justify-center">
               <AlertCircle className="text-red-500" size={24} />
             </div>
             <div className="flex-1">
