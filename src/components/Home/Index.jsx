@@ -413,7 +413,7 @@ const Home = () => {
                                 )}
 
                                 {/* Price Card */}
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                                <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent p-3 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
                                   <div className="text-white">
                                     <div className="flex items-center justify-between">
                                       <div>

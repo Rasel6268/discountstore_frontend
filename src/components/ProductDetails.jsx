@@ -1259,7 +1259,7 @@ const ProductDetailsPage = () => {
                   
                   return (
                     <div key={related._id} className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100 group">
-                      <Link href={`/product/${related._id}`}>
+                      <Link href={`/shop/${related._id}`}>
                         <div className="aspect-square relative overflow-hidden bg-gray-50">
                           <Image
                             src={related.images?.[0]?.url || related.images?.[0] || '/placeholder.png'}
