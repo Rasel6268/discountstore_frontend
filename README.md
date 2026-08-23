@@ -4,40 +4,60 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**Discount Store BD** is an e-commerce platform dedicated to offering high-quality products at competitive discount prices across Bangladesh. Built with modern web technologies, it features dynamic product categories, secure local payment gateway integrations, and an intuitive user experience optimized for both mobile and desktop users.
+**Discount Store BD** is a modern e-commerce platform built for customers across Bangladesh, offering quality products at competitive prices with a simple, fast, and responsive shopping experience.
 
-🔗 **Live Website:** [https://discountstorebd.com/](https://discountstorebd.com/)
+🔗 **Live Website:** https://discountstorebd.com/
 
 ---
 
-## 🚀 Key Features
+## 🚀 Features
 
-- **Product Catalog & Categorization:** Easy navigation through electronics, fashion, lifestyle items, and daily household essentials.
-- **Dynamic Search & Filtering:** Search products by keyword, category, price range, and discount tags.
-- **Shopping Cart & Wishlist:** Real-time state management allowing users to save items and manage quantities effortlessly.
-- **Bangladeshi Payment Gateways:** Seamless integration supporting Cash on Delivery (COD), bKash, Nagad, Rocket, and SSLCommerz credit/debit card processing.
-- **Order Tracking & Notifications:** Real-time updates on order processing, dispatch, and delivery status.
-- **Admin Dashboard:** Back-office interface to handle inventory, track sales, process customer orders, and update discount promotions.
-- **Responsive & Fast:** Optimized for fast loading times across 3G/4G/5G mobile networks in Bangladesh.
+* 🛍️ **Product Catalog** — Browse products across multiple categories.
+* 🔎 **Search & Filtering** — Search by keyword, category, price, and discounts.
+* 🛒 **Shopping Cart** — Add products, update quantities, and manage cart items.
+* ❤️ **Wishlist** — Save products for later.
+* 💳 **Multiple Payment Methods** — COD, bKash, Nagad, Rocket, and SSLCommerz.
+* 📦 **Order Management** — Place, track, and manage orders.
+* 🔔 **Order Notifications** — Receive updates about order status.
+* 👨‍💼 **Admin Dashboard** — Manage products, inventory, orders, and promotions.
+* 📱 **Responsive Design** — Optimized for mobile, tablet, and desktop.
+* ⚡ **Fast Performance** — Designed for reliable performance across Bangladesh.
 
 ---
 
 ## 🛠️ Tech Stack
 
-### **Frontend**
-- Framework: React / Next.js *(or HTML5/CSS3/JavaScript)*
-- Styling: Tailwind CSS / Bootstrap
-- State Management: Redux Toolkit / Context API
+### Frontend
 
-### **Backend**
-- Server/API: Node.js (Express) / PHP (Laravel)
-- Database: MongoDB / PostgreSQL / MySQL
-- Authentication: JWT / OAuth 2.0
+* **Next.js / React.js**
+* **JavaScript**
+* **Tailwind CSS / Bootstrap**
+* **Redux Toolkit / Context API**
 
-### **Integrations**
-- Payment Gateways: SSLCommerz, bKash Merchant API, Nagad API
-- SMS Gateway: Bulk SMS API for order confirmation (e.g., Greenweb, Teletalk)
-- Hosting & Infrastructure: Vercel / AWS / DigitalOcean
+### Backend
+
+* **Node.js**
+* **Express.js**
+* **MongoDB**
+* **Mongoose**
+* **JWT Authentication**
+
+### Payment & Services
+
+* **SSLCommerz**
+* **bKash Merchant API**
+* **Nagad API**
+* **Rocket**
+* **SMS Gateway**
+
+### Tools & Deployment
+
+* Git & GitHub
+* Postman
+* VS Code
+* Vercel
+* DigitalOcean
+* MongoDB Atlas
 
 ---
 
@@ -45,38 +65,391 @@
 
 ```text
 discount-store-bd/
-├── public/                 # Static assets (images, icons, favicons)
-├── src/
-│   ├── assets/             # Brand logos, styling stylesheets, and vectors
-│   ├── components/         # Reusable UI components (Navbar, Footer, ProductCard, Cart)
-│   ├── pages/              # Main route views (Home, Shop, Cart, Checkout, Dashboard)
-│   ├── services/           # API call functions (Payment APIs, Product fetching)
-│   ├── context/            # React state context / Redux store slices
-│   └── utils/              # Helper functions (currency formatting BDT ৳, validators)
-├── .env.example            # Environment variable template
-├── package.json            # Project dependencies and scripts
-└── README.md               # Project documentation
+│
+├── client/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── context/
+│   │   └── utils/
+│   │
+│   ├── .env.local
+│   └── package.json
+│
+├── server/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── utils/
+│   │
+│   ├── .env
+│   └── package.json
+│
+├── .gitignore
+├── LICENSE
+└── README.md
+```
 
-🚀 Getting StartedFollow these step-by-step instructions to get a copy of the project running on your local machine for development and testing.PrerequisitesMake sure you have the following installed on your machine:Node.js (v18.0.0 or higher recommended)npm (v9.0.0 or higher) or yarnGitMongoDB (Local or MongoDB Atlas URI)InstallationClone the repository:Bashgit clone [https://github.com/your-username/discountstorebd.git](https://github.com/your-username/discountstorebd.git)
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+* [Node.js](https://nodejs.org/) v18 or higher
+* npm v9 or higher
+* Git
+* MongoDB or MongoDB Atlas
+* VS Code or another code editor
+
+---
+
+## 📥 Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/discountstorebd.git
 cd discountstorebd
-Install Root and Sub-directory Dependencies:For Frontend:Bashcd client
-npm install
-For Backend:Bashcd ../server
-npm install
-Environment ConfigurationCreate a .env file in both the client and server directories based on the templates below.Server Environment Variables (/server/.env):Code snippetPORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/discountstorebd
-JWT_SECRET=your_jwt_secret_key_here
+```
 
-# Payment Gateway Credentials
+### 2. Install Frontend Dependencies
+
+```bash
+cd client
+npm install
+```
+
+### 3. Install Backend Dependencies
+
+```bash
+cd ../server
+npm install
+```
+
+---
+
+## 🔐 Environment Variables
+
+### Backend
+
+Create:
+
+```text
+server/.env
+```
+
+Add:
+
+```env
+PORT=5000
+NODE_ENV=development
+
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/discountstorebd
+
+JWT_SECRET=your_jwt_secret_key
+
+# SSLCommerz
 SSLCOMMERZ_STORE_ID=your_store_id
 SSLCOMMERZ_STORE_PASSWORD=your_store_password
-BKASH_APP_KEY=your_bkash_key
-BKASH_APP_SECRET=your_bkash_secret
-Client Environment Variables (/client/.env.local):Code snippetNEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+
+# bKash
+BKASH_APP_KEY=your_bkash_app_key
+BKASH_APP_SECRET=your_bkash_app_secret
+BKASH_USERNAME=your_bkash_username
+BKASH_PASSWORD=your_bkash_password
+```
+
+### Frontend
+
+Create:
+
+```text
+client/.env.local
+```
+
+Add:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-Running the ProjectStart the Backend Server:Bashcd server
+```
+
+> ⚠️ **Never commit `.env` or `.env.local` files to GitHub.**
+
+---
+
+## ▶️ Run the Application
+
+### Start Backend
+
+```bash
+cd server
 npm run dev
-Backend running on: http://localhost:5000Start the Frontend Client:Open a new terminal tab/window:Bashcd client
+```
+
+Backend:
+
+```text
+http://localhost:5000
+```
+
+### Start Frontend
+
+Open a new terminal:
+
+```bash
+cd client
 npm run dev
-Frontend running on: http://localhost:3000🔌 API Endpoints SummaryMethodEndpointDescriptionAccessGET/api/productsGet all listed productsPublicGET/api/products/:idGet single product detailsPublicPOST/api/users/registerRegister new userPublicPOST/api/users/loginUser authentication & tokenPublicPOST/api/ordersPlace a new orderPrivatePOST/api/payment/initInitialize payment gatewayPrivate📜 Available ScriptsIn the project client/server directory, you can run:npm run dev: Runs the app in development mode.npm run build: Builds the app for production deployment.npm run start: Starts the production server.npm run lint: Checks for code linting errors.🤝 ContributingContributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.Fork the ProjectCreate your Feature Branch (git checkout -b feature/AmazingFeature)Commit your Changes (git commit -m 'Add some AmazingFeature')Push to the Branch (git push origin feature/AmazingFeature)Open a Pull Request📄 LicenseDistributed under the MIT License. See LICENSE for more information.📞 Contact & SupportDiscount Store BDWebsite: https://discountstorebd.com/Email: support@discountstorebd.comLocation: Dhaka, Bangladesh
+```
+
+Frontend:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## 🔌 API Endpoints
+
+| Method | Endpoint                 | Description         | Access  |
+| ------ | ------------------------ | ------------------- | ------- |
+| `GET`  | `/api/products`          | Get all products    | Public  |
+| `GET`  | `/api/products/:id`      | Get product details | Public  |
+| `POST` | `/api/users/register`    | Register user       | Public  |
+| `POST` | `/api/users/login`       | Login user          | Public  |
+| `GET`  | `/api/users/profile`     | Get user profile    | Private |
+| `POST` | `/api/orders`            | Create order        | Private |
+| `GET`  | `/api/orders`            | Get user orders     | Private |
+| `GET`  | `/api/orders/:id`        | Get order details   | Private |
+| `POST` | `/api/payment/init`      | Initialize payment  | Private |
+| `PUT`  | `/api/orders/:id/status` | Update order status | Admin   |
+
+---
+
+## 💳 Payment Flow
+
+```text
+Customer
+   │
+   ▼
+Shopping Cart
+   │
+   ▼
+Checkout
+   │
+   ▼
+Select Payment Method
+   │
+   ├── Cash on Delivery
+   ├── bKash
+   ├── Nagad
+   ├── Rocket
+   └── SSLCommerz
+   │
+   ▼
+Payment Processing
+   │
+   ▼
+Payment Verification
+   │
+   ▼
+Order Confirmation
+   │
+   ▼
+Order Tracking
+```
+
+---
+
+## 📦 Order Status
+
+Orders can move through the following stages:
+
+```text
+Pending
+   ↓
+Confirmed
+   ↓
+Processing
+   ↓
+Shipped
+   ↓
+Out for Delivery
+   ↓
+Delivered
+```
+
+Additional statuses:
+
+* Cancelled
+* Failed
+* Returned
+
+---
+
+## 🔒 Security
+
+The application implements several security practices:
+
+* JWT-based authentication
+* Password hashing
+* Protected API routes
+* Role-based authorization
+* Input validation
+* Secure environment variables
+* CORS configuration
+* Protected admin routes
+* Payment verification
+
+---
+
+## 📜 Available Scripts
+
+### Frontend
+
+```bash
+npm run dev
+```
+
+Start development server.
+
+```bash
+npm run build
+```
+
+Create production build.
+
+```bash
+npm run start
+```
+
+Start production server.
+
+```bash
+npm run lint
+```
+
+Run ESLint.
+
+### Backend
+
+```bash
+npm run dev
+```
+
+Start development server.
+
+```bash
+npm start
+```
+
+Start production server.
+
+---
+
+## 🚀 Deployment
+
+### Frontend
+
+Recommended platforms:
+
+* Vercel
+* Netlify
+* AWS
+* DigitalOcean
+
+### Backend
+
+Recommended platforms:
+
+* DigitalOcean
+* AWS
+* Render
+* Railway
+* VPS
+
+### Database
+
+* MongoDB Atlas
+* Self-hosted MongoDB
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!
+
+### Steps
+
+1. Fork the repository.
+2. Create a feature branch:
+
+```bash
+git checkout -b feature/AmazingFeature
+```
+
+3. Make your changes.
+4. Commit your changes:
+
+```bash
+git commit -m "Add AmazingFeature"
+```
+
+5. Push your branch:
+
+```bash
+git push origin feature/AmazingFeature
+```
+
+6. Open a Pull Request.
+
+---
+
+## 🐛 Issues
+
+If you find a bug or have a feature request, please open an issue and provide:
+
+* Clear description of the issue
+* Steps to reproduce
+* Expected behavior
+* Actual behavior
+* Screenshots, if applicable
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
+
+See the [`LICENSE`](LICENSE) file for details.
+
+---
+
+## 📞 Contact
+
+### Discount Store BD
+
+🌐 **Website:** https://discountstorebd.com/
+
+📧 **Email:** [support@discountstorebd.com](mailto:support@discountstorebd.com)
+
+📍 **Location:** Dhaka, Bangladesh
+
+---
+
+## ⭐ Support
+
+If you find this project useful, please consider giving the repository a ⭐ on GitHub.
+
+**Built with ❤️ in Bangladesh 🇧🇩**
