@@ -39,6 +39,11 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(1);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   // Coupon states
   const [appliedCoupon, setAppliedCoupon] = useState(null);
@@ -82,9 +87,7 @@ const CheckoutPage = () => {
 
   // Calculate totals with coupon
   const subtotal = items.reduce((sum, item) => {
-    const sizeExtra = item.size?.extraPrice || 0;
-    const itemTotal = (item.price + sizeExtra) * item.quantity;
-    return sum + itemTotal;
+    return sum + item.price * item.quantity;
   }, 0);
 
   const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
@@ -384,12 +387,16 @@ const CheckoutPage = () => {
   };
 
   const handleCODOrder = async () => {
+    if (!items || items.length === 0) {
+      toast.error("Your cart is empty. Please add items before placing an order.");
+      router.push("/cart");
+      return;
+    }
     setLoading(true);
 
     try {
       const orderItems = items.map((item) => {
-        const sizeExtra = item.size?.extraPrice || 0;
-        const itemTotalPrice = (item.price + sizeExtra) * item.quantity;
+        const itemTotalPrice = item.price * item.quantity;
 
         return {
           productId: item.productId,
@@ -480,12 +487,16 @@ const CheckoutPage = () => {
   };
 
   const initiateSSLPayment = async () => {
+    if (!items || items.length === 0) {
+      toast.error("Your cart is empty. Please add items before placing an order.");
+      router.push("/cart");
+      return;
+    }
     setLoading(true);
 
     try {
       const orderItems = items.map((item) => {
-        const sizeExtra = item.size?.extraPrice || 0;
-        const itemTotalPrice = (item.price + sizeExtra) * item.quantity;
+        const itemTotalPrice = item.price * item.quantity;
 
         return {
           productId: item.productId,
@@ -615,6 +626,11 @@ const CheckoutPage = () => {
   };
 
   const placeOrder = async () => {
+    if (!items || items.length === 0) {
+      toast.error("Your cart is empty. Please add items before placing an order.");
+      router.push("/cart");
+      return;
+    }
     if (!validateStep3()) return;
 
     if (formData.paymentMethod === "ssl") {
@@ -761,6 +777,24 @@ const CheckoutPage = () => {
       </div>
     </div>
   );
+
+  if (isHydrated && items.length === 0) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-amber-50/50 to-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto text-center py-12 bg-white rounded-2xl shadow-lg p-8">
+          <GiHandBag className="mx-auto text-6xl text-amber-400 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Cart is Empty</h2>
+          <p className="text-gray-600 mb-6">Looks like you haven't added any products to your cart yet.</p>
+          <button
+            onClick={() => router.push("/shop")}
+            className="w-full py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition font-semibold cursor-pointer"
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 md:py-12">
@@ -1445,7 +1479,7 @@ const CheckoutPage = () => {
                     </button>
                     <button
                       onClick={placeOrder}
-                      disabled={loading}
+                      disabled={loading || items.length === 0}
                       className="px-6 py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition font-semibold disabled:opacity-50 flex items-center gap-2"
                     >
                       {loading ? (
@@ -1474,9 +1508,7 @@ const CheckoutPage = () => {
 
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                 {items.map((item, index) => {
-                  const sizeExtra = item.size?.extraPrice || 0;
-                  const itemTotalPrice =
-                    (item.price + sizeExtra) * item.quantity;
+                  const itemTotalPrice = item.price * item.quantity;
 
                   return (
                     <div

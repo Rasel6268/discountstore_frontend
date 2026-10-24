@@ -2,9 +2,9 @@
 import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation, EffectFade } from "swiper/modules";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { FaArrowRight, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 // Import Swiper styles
 import "swiper/css";
@@ -18,113 +18,153 @@ const BannerSlider = () => {
   const banners = [
     {
       id: 1,
-      title: "Premium Leather Collection",
-      subtitle: "Handcrafted Excellence",
-      discount: "30% OFF",
-      bgColor: "from-amber-800 to-amber-900",
-      buttonText: "Shop Now",
+      title: "Handcrafted Leather Footwear",
+      subtitle: "Artisan Oxford & Heritage Boots",
+      tag: "Signature Craft",
+      discount: "UP TO 35% OFF",
+      description:
+        "Full-grain leather shoes engineered for timeless elegance, superior durability, and all-day comfort.",
+      buttonText: "Shop Footwear",
       link: "/shop",
-      image: "https://res.cloudinary.com/doumlnejx/image/upload/v1776515769/sassy-goodlooking-redhead-female-yellow-sweater-listen-music-white-headphones-touch-earphones_l6p8sp.jpg",
+      image: "https://ik.imagekit.io/efgitz1yf/banner_collection.jpg",
+      badge: "Full-Grain Leather",
     },
     {
       id: 2,
-      title: "Fusion Handbags",
-      subtitle: "Modern Meets Tradition",
-      discount: "25% OFF",
-      bgColor: "from-amber-700 to-amber-800",
-      buttonText: "Explore",
+      title: "Designer Fusion Handbags",
+      subtitle: "Modern Luxury Meets Everyday Utility",
+      tag: "Trending Now",
+      discount: "FLAT 25% OFF",
+      description:
+        "Rich cognac leather tote and crossbody bags accented with custom gold hardware and structured silhouettes.",
+      buttonText: "Explore Handbags",
       link: "/shop",
-      image: "https://res.cloudinary.com/doumlnejx/image/upload/v1776515770/tender-romantic-dreamy-redhead-woman-winter-hat-sweater-embrace-big-cute-red-heart-sign-as-sy_sljs7f.jpg",
+      image: "https://ik.imagekit.io/efgitz1yf/banner_handbag.jpg",
+      badge: "Exclusive Design",
     },
     {
       id: 3,
-      title: "Eid Special Offer",
-      subtitle: "Limited Time Deal",
-      discount: "40% OFF",
-      bgColor: "from-amber-900 to-amber-950",
+      title: "Bespoke Leather Essentials",
+      subtitle: "Jackets, Wallets & Formal Belts",
+      tag: "Festive Special",
+      discount: "SPECIAL 40% OFF",
+      description:
+        "Elevate your signature wardrobe with masterfully tailored leather jackets, slim wallets, and durable belts.",
       buttonText: "Grab Deal",
       link: "/shop",
-      image: "https://res.cloudinary.com/doumlnejx/image/upload/v1776515770/tender-romantic-dreamy-redhead-woman-winter-hat-sweater-embrace-big-cute-red-heart-sign-as-sy_sljs7f.jpg",
+      image: "https://ik.imagekit.io/efgitz1yf/banner_shoes.jpg",
+      badge: "Limited Stock",
     },
   ];
 
-  
+  const handleSlideClick = (link) => {
+    if (link) {
+      router.push(link);
+    }
+  };
+
   return (
-    <div className="w-full h-full">
+    <div className="w-full relative rounded-2xl overflow-hidden shadow-2xl group/slider bg-neutral-900">
       <Swiper
         modules={[Autoplay, Pagination, Navigation, EffectFade]}
         effect="fade"
+        fadeEffect={{ crossFade: true }}
         spaceBetween={0}
         slidesPerView={1}
         autoplay={{
-          delay: 4000,
+          delay: 4500,
           disableOnInteraction: false,
           pauseOnMouseEnter: true,
         }}
         pagination={{
           clickable: true,
-          dynamicBullets: true,
+          el: ".banner-custom-pagination",
+          bulletClass: "banner-bullet",
+          bulletActiveClass: "banner-bullet-active",
         }}
         navigation={{
-          nextEl: ".swiper-button-next",
-          prevEl: ".swiper-button-prev",
+          nextEl: ".banner-nav-next",
+          prevEl: ".banner-nav-prev",
         }}
         loop={true}
-        className="rounded-2xl overflow-hidden h-full"
+        className="w-full h-[360px] sm:h-[420px] md:h-[480px] lg:h-[500px]"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.id}>
             <div
-              className={`relative h-full min-h-100 md:min-h-125 bg-linear-to-br ${banner.bgColor} overflow-hidden cursor-pointer`}
+              className="relative w-full h-full overflow-hidden cursor-pointer flex items-center group/slide"
               onClick={() => handleSlideClick(banner.link)}
             >
               {/* Background Image */}
-              <div className="absolute inset-0 opacity-70">
+              <div className="absolute inset-0">
                 <Image
                   src={banner.image}
                   alt={banner.title}
                   fill
-                  className="object-cover"
                   priority={banner.id === 1}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 80vw"
+                  className="object-cover object-center transform scale-100 group-hover/slide:scale-105 transition-transform duration-1000 ease-out"
                 />
               </div>
 
-              {/* Decorative Elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-600/10 rounded-full blur-2xl"></div>
+              {/* Multi-layer Gradient Overlay for 100% Text Contrast & Readability */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/25 sm:from-black/85 sm:via-black/55 sm:to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 sm:hidden" />
 
-              {/* Content */}
-              <div className="relative z-10 flex flex-col justify-center h-full p-6 md:p-8">
-                <div className="mb-3">
-                  <span className="inline-block px-3 py-1 bg-amber-500/20 backdrop-blur text-amber-100 text-xs font-semibold rounded-full border border-amber-400/30 cursor-default">
-                    Limited Edition
+              {/* Decorative Subtle Glowing Orbs */}
+              <div className="absolute -top-10 -left-10 w-44 h-44 sm:w-60 sm:h-60 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-10 right-10 w-44 h-44 sm:w-72 sm:h-72 bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Slide Content */}
+              <div className="relative z-10 w-full max-w-xl px-5 py-6 sm:px-8 sm:py-8 md:px-12 flex flex-col justify-center h-full">
+                {/* Badges */}
+                <div className="flex items-center gap-2 flex-wrap mb-2 sm:mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-500/25 text-amber-200 border border-amber-400/40 backdrop-blur-md shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    {banner.tag}
+                  </span>
+                  <span className="inline-flex px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-white/10 text-white/90 border border-white/20 backdrop-blur-md">
+                    {banner.badge}
                   </span>
                 </div>
 
-                <h3 className="text-amber-200 text-sm md:text-base uppercase tracking-wider mb-2">
+                {/* Subtitle */}
+                <p className="text-amber-300 font-medium tracking-wider uppercase text-[11px] sm:text-xs md:text-sm mb-1 sm:mb-1.5">
                   {banner.subtitle}
-                </h3>
+                </p>
 
-                <h2 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-3 leading-tight">
+                {/* Title */}
+                <h2 className="text-white font-extrabold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-2 sm:mb-3 drop-shadow-md">
                   {banner.title}
                 </h2>
 
-                <div className="mb-4">
-                  <span className="text-amber-300 text-3xl md:text-4xl font-bold">
+                {/* Discount Tagline */}
+                <div className="flex items-baseline gap-2 mb-2 sm:mb-3">
+                  <span className="text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 drop-shadow">
                     {banner.discount}
+                  </span>
+                  <span className="text-xs sm:text-sm font-medium text-amber-100/80">
+                    On Premium Selection
                   </span>
                 </div>
 
-                <p className="text-amber-100 text-sm md:text-base mb-6 max-w-[80%]">
-                  Handcrafted premium leather products with modern fusion designs.
-                  Limited stock available.
+                {/* Description */}
+                <p className="text-gray-200 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2 sm:line-clamp-3 mb-4 sm:mb-6 max-w-md">
+                  {banner.description}
                 </p>
-                {/* Offer Badge */}
-                <div className="absolute bottom-4 right-4 bg-amber-500/20 backdrop-blur rounded-lg px-3 py-1.5 border border-amber-400/30 cursor-default">
-                  <div className="flex items-center gap-2 text-amber-100 text-xs">
-                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    Limited Time Offer
-                  </div>
+
+                {/* CTA Button */}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSlideClick(banner.link);
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-amber-950/40 hover:shadow-amber-500/30 hover:from-amber-400 hover:to-amber-600 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 cursor-pointer"
+                  >
+                    <span>{banner.buttonText}</span>
+                    <FaArrowRight className="text-xs transition-transform duration-300 group-hover:translate-x-1" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -132,45 +172,49 @@ const BannerSlider = () => {
         ))}
       </Swiper>
 
-      {/* Custom Navigation Buttons */}
+      {/* Navigation Next / Prev Buttons */}
+      <button
+        aria-label="Previous Slide"
+        className="banner-nav-prev absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/20 backdrop-blur-md hidden sm:flex items-center justify-center transition-all duration-300 opacity-0 group-hover/slider:opacity-100 hover:scale-110 cursor-pointer"
+      >
+        <FaChevronLeft className="text-sm sm:text-base" />
+      </button>
+      <button
+        aria-label="Next Slide"
+        className="banner-nav-next absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/20 backdrop-blur-md hidden sm:flex items-center justify-center transition-all duration-300 opacity-0 group-hover/slider:opacity-100 hover:scale-110 cursor-pointer"
+      >
+        <FaChevronRight className="text-sm sm:text-base" />
+      </button>
+
+      {/* Custom Pagination Container */}
+      <div className="banner-custom-pagination absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2" />
+
+      {/* Scoped Styles for Swiper Pagination Bullets */}
       <style jsx>{`
-        :global(.swiper-button-next),
-        :global(.swiper-button-prev) {
-          color: white;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(4px);
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
+        :global(.banner-bullet) {
+          width: 8px;
+          height: 8px;
+          border-radius: 9999px;
+          background: rgba(255, 255, 255, 0.45);
           transition: all 0.3s ease;
           cursor: pointer;
+          display: inline-block;
         }
-        
-        :global(.swiper-button-next:hover),
-        :global(.swiper-button-prev:hover) {
-          background: rgba(255, 255, 255, 0.3);
-          transform: scale(1.1);
+        @media (min-width: 640px) {
+          :global(.banner-bullet) {
+            width: 10px;
+            height: 10px;
+          }
         }
-        
-        :global(.swiper-button-next:after),
-        :global(.swiper-button-prev:after) {
-          font-size: 16px;
-          font-weight: bold;
-        }
-        
-        :global(.swiper-pagination-bullet) {
-          background: white;
-          opacity: 0.5;
-          cursor: pointer;
-        }
-        
-        :global(.swiper-pagination-bullet-active) {
+        :global(.banner-bullet-active) {
+          width: 24px;
           background: #f59e0b;
-          opacity: 1;
+          box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
         }
-        
-        :global(.swiper-pagination) {
-          bottom: 20px !important;
+        @media (min-width: 640px) {
+          :global(.banner-bullet-active) {
+            width: 32px;
+          }
         }
       `}</style>
     </div>

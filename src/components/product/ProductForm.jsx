@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCategories } from "@/hooks/useCategories";
 import { useBrands } from "@/hooks/useBrands";
@@ -17,10 +17,15 @@ import {
   Crown,
   Award,
   Palette,
+  Upload,
+  UploadCloud,
+  Link,
+  Trash2,
 } from "lucide-react";
 import api from "@/config/api";
 import toast from "react-hot-toast";
 import ProductSizeManager from "../ProductSizeManager";
+import useImageUpload from "@/hooks/useImageUpload";
 
 // Custom hooks for product mutations
 const useCreateProduct = () => {
@@ -89,6 +94,9 @@ const ProductForm = ({
   const [imageInput, setImageInput] = useState({ url: "", alt: "" });
   const [sizeEnabled, setSizeEnabled] = useState(false);
   const [colorEnabled, setColorEnabled] = useState(false);
+  const [uploadMode, setUploadMode] = useState("device"); // "device" | "url"
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
 
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -113,11 +121,11 @@ const ProductForm = ({
   // Transform colors data with safe access
   const availableColors = Array.isArray(colorsData)
     ? colorsData.map((color) => ({
-        _id: color._id || color.id,
-        name: color.name || "Unnamed Color",
-        hexCode: color.hexCode || "#000000",
-        isActive: color.isActive !== false,
-      }))
+      _id: color._id || color.id,
+      name: color.name || "Unnamed Color",
+      hexCode: color.hexCode || "#000000",
+      isActive: color.isActive !== false,
+    }))
     : [];
 
   // Fetch size groups from API
@@ -273,6 +281,70 @@ const ProductForm = ({
     }));
   };
 
+  const {
+    uploadMultipleImages,
+    uploading: uploadingImages,
+    progress: uploadProgress,
+    deleteImage,
+  } = useImageUpload();
+
+  const handleImageFilesSelected = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const uploadedImages = await uploadMultipleImages(files, "/products");
+    if (uploadedImages && uploadedImages.length > 0) {
+      const newImages = uploadedImages.map((img, i) => ({
+        url: img.url,
+        fileId: img.fileId,
+        alt: img.name || formData.name || "",
+        isPrimary: formData.images.length === 0 && i === 0,
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    const uploadedImages = await uploadMultipleImages(files, "/products");
+    if (uploadedImages && uploadedImages.length > 0) {
+      const newImages = uploadedImages.map((img, i) => ({
+        url: img.url,
+        fileId: img.fileId,
+        alt: img.name || formData.name || "",
+        isPrimary: formData.images.length === 0 && i === 0,
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
+    }
+  };
+
   const handleAddImage = () => {
     if (imageInput.url) {
       const newImage = {
@@ -289,6 +361,10 @@ const ProductForm = ({
   };
 
   const handleRemoveImage = (index) => {
+    const imgToRemove = formData.images[index];
+    if (imgToRemove?.fileId) {
+      deleteImage(imgToRemove.fileId);
+    }
     setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
@@ -386,20 +462,20 @@ const ProductForm = ({
       trackInventory: formData.trackInventory !== false,
       allowBackorder: formData.allowBackorder || false,
       hasSizes: sizeEnabled && formData.sizes.length > 0,
-      
+
       sizes: sizeEnabled
         ? formData.sizes.map((size) => ({
-            name: size.name, 
-            quantity: size.quantity || 0,
-            type: size.type || "",
-            extraPrice: size.extraPrice || 0,
-          }))
+          name: size.name,
+          quantity: size.quantity || 0,
+          type: size.type || "",
+          extraPrice: size.extraPrice || 0,
+        }))
         : [],
       hasColors: colorEnabled && formData.colors.length > 0,
       colors: colorEnabled
         ? formData.colors.map((color) => ({
-            name: color.name, // Only send the name
-          }))
+          name: color.name, // Only send the name
+        }))
         : [],
       images: formData.images || [],
       status: formData.status || "draft",
@@ -789,11 +865,10 @@ const ProductForm = ({
                               ? handleRemoveColor(color._id)
                               : handleAddColor(color)
                           }
-                          className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-pointer ${
-                            isSelected
+                          className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all cursor-pointer ${isSelected
                               ? "border-pink-500 bg-pink-50"
                               : "border-gray-200 hover:border-pink-300"
-                          }`}
+                            }`}
                         >
                           <div
                             className="w-8 h-8 rounded-full shadow-sm"
@@ -985,72 +1060,218 @@ const ProductForm = ({
 
         {/* Images */}
         <div className="border-b pb-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
-            <Image size={18} className="text-pink-600" />
-            Product Images
-          </h3>
-          <div className="mb-4">
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                placeholder="Image URL"
-                value={imageInput.url}
-                onChange={(e) =>
-                  setImageInput({ ...imageInput, url: e.target.value })
-                }
-                className="flex-1 px-4 py-2 border rounded-lg"
-              />
-              <input
-                type="text"
-                placeholder="Alt text"
-                value={imageInput.alt}
-                onChange={(e) =>
-                  setImageInput({ ...imageInput, alt: e.target.value })
-                }
-                className="flex-1 px-4 py-2 border rounded-lg"
-              />
-              <button
-                type="button"
-                onClick={handleAddImage}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
-              >
-                Add
-              </button>
-            </div>
-            <p className="text-xs text-gray-500">
-              Add product images (first image will be primary by default)
-            </p>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Image size={20} className="text-pink-600" />
+              Product Images
+            </h3>
+            <span className="text-xs font-semibold px-2.5 py-1 bg-pink-50 text-pink-700 rounded-full border border-pink-200">
+              {formData.images.length} {formData.images.length === 1 ? "Image" : "Images"} Added
+            </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
-            {formData.images.map((img, idx) => (
-              <div key={idx} className="relative border rounded-lg p-2">
-                <img
-                  src={img.url}
-                  alt={img.alt}
-                  className="h-24 w-full object-cover rounded"
-                />
-                <div className="mt-2 flex justify-between items-center">
-                  <button
-                    type="button"
-                    onClick={() => handleSetPrimaryImage(idx)}
-                    className={`text-xs px-2 py-1 rounded cursor-pointer ${
-                      img.isPrimary ? "bg-green-500 text-white" : "bg-gray-200"
-                    }`}
-                  >
-                    {img.isPrimary ? "Primary" : "Set Primary"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(idx)}
-                    className="text-red-500 text-xs"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
+          {/* Mode Switcher Tabs */}
+          <div className="flex gap-2 mb-4 border-b border-gray-200">
+            <button
+              type="button"
+              onClick={() => setUploadMode("device")}
+              className={`pb-2.5 px-4 text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer border-b-2 ${uploadMode === "device"
+                  ? "border-pink-600 text-pink-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <UploadCloud size={16} />
+              Upload from Device
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadMode("url")}
+              className={`pb-2.5 px-4 text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer border-b-2 ${uploadMode === "url"
+                  ? "border-pink-600 text-pink-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              <Link size={16} />
+              Add via Image URL
+            </button>
           </div>
+
+          {/* Device Upload Area */}
+          {uploadMode === "device" && (
+            <div className="mb-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageFilesSelected}
+                disabled={uploadingImages || isLoading}
+                className="hidden"
+              />
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => !uploadingImages && fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging
+                    ? "border-pink-600 bg-pink-50 scale-[1.01]"
+                    : uploadingImages
+                      ? "border-pink-300 bg-pink-50/40 cursor-not-allowed"
+                      : "border-gray-300 hover:border-pink-500 hover:bg-pink-50/20 bg-gray-50/50"
+                  }`}
+              >
+                {uploadingImages ? (
+                  <div className="flex flex-col items-center gap-3 py-2">
+                    <Loader2 className="w-10 h-10 text-pink-600 animate-spin" />
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">
+                        Uploading to ImageKit... {uploadProgress}%
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        Please wait while your image files are uploaded
+                      </p>
+                    </div>
+                    <div className="w-64 bg-gray-200 rounded-full h-2.5 overflow-hidden mt-1">
+                      <div
+                        className="bg-pink-600 h-2.5 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center shadow-xs">
+                      <UploadCloud size={28} />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-semibold text-gray-800">
+                        Drag & Drop image files here
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                        Supports multiple files selection: JPG, PNG, WEBP, GIF, SVG (up to 10MB each)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="mt-1 px-5 py-2.5 bg-pink-600 hover:bg-pink-700 text-white text-sm font-semibold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer"
+                    >
+                      <Plus size={16} />
+                      Choose Files from Device
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* URL Input Area */}
+          {uploadMode === "url" && (
+            <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                Paste Image Web Address
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  placeholder="https://example.com/image.jpg"
+                  value={imageInput.url}
+                  onChange={(e) =>
+                    setImageInput({ ...imageInput, url: e.target.value })
+                  }
+                  className="flex-2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-pink-500 focus:outline-hidden"
+                />
+                <input
+                  type="text"
+                  placeholder="Alt / Title (optional)"
+                  value={imageInput.alt}
+                  onChange={(e) =>
+                    setImageInput({ ...imageInput, alt: e.target.value })
+                  }
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-pink-500 focus:outline-hidden"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddImage}
+                  className="px-5 py-2.5 bg-gray-900 text-white rounded-lg hover:bg-gray-800 text-sm font-semibold cursor-pointer shrink-0 transition"
+                >
+                  Add URL
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Images Grid / Gallery */}
+          {formData.images.length > 0 ? (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Attached Gallery ({formData.images.length})
+                </span>
+                <span className="text-xs text-gray-500">
+                  First image or selected image will be used as the main product photo
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {formData.images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className={`relative group border rounded-xl overflow-hidden bg-white shadow-xs transition-all ${img.isPrimary
+                        ? "ring-2 ring-pink-500 border-pink-500 shadow-sm"
+                        : "border-gray-200 hover:border-gray-300"
+                      }`}
+                  >
+                    <div className="h-32 w-full bg-gray-50 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={img.url}
+                        alt={img.alt || "Product image"}
+                        className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    </div>
+
+                    {img.isPrimary && (
+                      <span className="absolute top-2 left-2 px-2.5 py-0.5 bg-pink-600 text-white text-[11px] font-bold rounded-md shadow-sm">
+                        Primary Cover
+                      </span>
+                    )}
+
+                    <div className="p-2.5 bg-white flex items-center justify-between gap-1 border-t border-gray-100">
+                      {!img.isPrimary ? (
+                        <button
+                          type="button"
+                          onClick={() => handleSetPrimaryImage(idx)}
+                          className="text-xs font-medium px-2.5 py-1 bg-gray-100 hover:bg-pink-50 hover:text-pink-600 text-gray-700 rounded-md transition cursor-pointer"
+                        >
+                          Set Primary
+                        </button>
+                      ) : (
+                        <span className="text-xs text-pink-600 font-semibold px-1">
+                          Cover Photo
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
+                        title="Remove image"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="py-4 text-center border rounded-xl border-dashed border-gray-200 bg-gray-50/50">
+              <p className="text-xs text-gray-500">
+                No images added yet. Upload from your device above.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Shipping */}

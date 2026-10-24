@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   FaStar,
   FaRegHeart,
@@ -33,6 +33,7 @@ const Home = () => {
   const router = useRouter();
   const { user, loading } = useAuth();
   const { items, addToCart } = useCart();
+  const productSliderRef = useRef(null);
 
   // Fetch products
   const { data: products } = useQuery({
@@ -136,7 +137,10 @@ const Home = () => {
   };
 
   // Filter products
-  const bestProducts = products?.filter((item) => item.isBest === true);
+  const bestProducts =
+    products?.filter((item) => item.isBest === true)?.length > 0
+      ? products.filter((item) => item.isBest === true)
+      : products?.slice(0, 8) || [];
   const discountedProducts = products?.filter(
     (item) => item.discountPercentage > 20,
   );
@@ -223,57 +227,28 @@ const Home = () => {
     if (coupon.type === "percentage") {
       return `${coupon.value}% OFF`;
     }
-    return `$${coupon.value} OFF`;
+    return `৳${coupon.value} OFF`;
   };
 
   const productSliderSettings = {
-    dots: true,
+    dots: false,
     infinite: true,
     speed: 500,
-    slidesToShow: 3,
+    slidesToShow: 2,
     slidesToScroll: 1,
     initialSlide: 0,
-    arrows: true,
+    arrows: false,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 3500,
     pauseOnHover: true,
     responsive: [
       {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: 3,
-          slidesToScroll: 1,
-          infinite: true,
-          dots: true,
-          arrows: true,
-          autoplay: true,
-          autoplaySpeed: 3000,
-          pauseOnHover: true,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 1,
-          initialSlide: 1,
-          arrows: true,
-          dots: true,
-          autoplay: true,
-          autoplaySpeed: 3000,
-          pauseOnHover: true,
-        },
-      },
-      {
-        breakpoint: 480,
+        breakpoint: 640,
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-          arrows: true,
-          dots: true,
-          autoplay: true,
-          autoplaySpeed: 3000,
-          pauseOnHover: true,
+          arrows: false,
+          dots: false,
         },
       },
     ],
@@ -298,11 +273,10 @@ const Home = () => {
                   {categories?.map((category, index) => (
                     <li
                       key={index}
-                      className={`flex justify-between items-center rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer ${
-                        category.active
-                          ? "bg-linear-to-r from-amber-500 to-amber-600 text-white shadow-lg"
-                          : "bg-amber-800/50 text-amber-100 shadow-md hover:bg-amber-700/70 hover:shadow-lg"
-                      }`}
+                      className={`flex justify-between items-center rounded-xl px-4 py-3 transition-all duration-300 cursor-pointer ${category.active
+                        ? "bg-linear-to-r from-amber-500 to-amber-600 text-white shadow-lg"
+                        : "bg-amber-800/50 text-amber-100 shadow-md hover:bg-amber-700/70 hover:shadow-lg"
+                        }`}
                       onClick={() => {
                         if (category._id) {
                           handleCategoryClick(category._id, category.name);
@@ -314,11 +288,10 @@ const Home = () => {
                     >
                       <span className="font-medium">{category.name}</span>
                       <span
-                        className={`text-sm font-semibold rounded-full px-2.5 py-1 min-w-8 text-center ${
-                          category.active
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-amber-600 text-amber-100"
-                        }`}
+                        className={`text-sm font-semibold rounded-full px-2.5 py-1 min-w-8 text-center ${category.active
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-amber-600 text-amber-100"
+                          }`}
                       >
                         {category.productCount}
                       </span>
@@ -365,9 +338,9 @@ const Home = () => {
                           const averageRating =
                             product.reviews?.length > 0
                               ? product.reviews.reduce(
-                                  (sum, r) => sum + r.rating,
-                                  0,
-                                ) / product.reviews.length
+                                (sum, r) => sum + r.rating,
+                                0,
+                              ) / product.reviews.length
                               : 0;
                           const isOutOfStock =
                             product.trackInventory && product.quantity === 0;
@@ -452,11 +425,10 @@ const Home = () => {
                                       {[...Array(5)].map((_, star) => (
                                         <FaStar
                                           key={star}
-                                          className={`${
-                                            star < Math.round(averageRating)
-                                              ? "text-amber-400"
-                                              : "text-amber-200"
-                                          } text-[10px]`}
+                                          className={`${star < Math.round(averageRating)
+                                            ? "text-amber-400"
+                                            : "text-amber-200"
+                                            } text-[10px]`}
                                         />
                                       ))}
                                     </div>
@@ -656,11 +628,10 @@ const Home = () => {
                             <button
                               key={index}
                               onClick={() => goToDiscount(index)}
-                              className={`transition-all duration-500 rounded-full ${
-                                index === currentDiscountIndex
-                                  ? "bg-white w-5 h-1.5"
-                                  : "bg-white/50 hover:bg-white/70 w-1.5 h-1.5"
-                              }`}
+                              className={`transition-all duration-500 rounded-full ${index === currentDiscountIndex
+                                ? "bg-white w-5 h-1.5"
+                                : "bg-white/50 hover:bg-white/70 w-1.5 h-1.5"
+                                }`}
                             />
                           ))}
                         </div>
@@ -773,11 +744,10 @@ const Home = () => {
                       {[...Array(5)].map((_, star) => (
                         <FaStar
                           key={star}
-                          className={`${
-                            star < (product.averageRating || 0)
-                              ? "text-amber-400"
-                              : "text-amber-200"
-                          } text-xs`}
+                          className={`${star < (product.averageRating || 0)
+                            ? "text-amber-400"
+                            : "text-amber-200"
+                            } text-xs`}
                         />
                       ))}
                     </div>
@@ -805,11 +775,10 @@ const Home = () => {
                   <button
                     onClick={() => handleAddToCart(product)}
                     disabled={product.trackInventory && product.quantity === 0}
-                    className={`mt-auto w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                      product.trackInventory && product.quantity === 0
-                        ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
-                    }`}
+                    className={`mt-auto w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${product.trackInventory && product.quantity === 0
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
+                      }`}
                   >
                     {product.trackInventory && product.quantity === 0
                       ? "Out of Stock"
@@ -891,9 +860,12 @@ const Home = () => {
               <div className="text-3xl font-bold text-amber-400 mb-3">
                 40% OFF
               </div>
-              <button className="border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition">
+              <Link
+                href="/shop"
+                className="inline-block border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition cursor-pointer"
+              >
                 Shop Now
-              </button>
+              </Link>
             </div>
 
             <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-amber-600 hover:bg-white/20 transition group">
@@ -909,9 +881,12 @@ const Home = () => {
               <div className="text-3xl font-bold text-amber-400 mb-3">
                 35% OFF
               </div>
-              <button className="border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition">
+              <Link
+                href="/shop"
+                className="inline-block border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition cursor-pointer"
+              >
                 Shop Now
-              </button>
+              </Link>
             </div>
 
             <div className="bg-white/10 backdrop-blur rounded-2xl p-6 text-center border border-amber-600 hover:bg-white/20 transition group">
@@ -927,9 +902,12 @@ const Home = () => {
               <div className="text-3xl font-bold text-amber-400 mb-3">
                 50% OFF
               </div>
-              <button className="border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition">
+              <Link
+                href="/shop"
+                className="inline-block border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition cursor-pointer"
+              >
                 Shop Now
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -1004,11 +982,10 @@ const Home = () => {
                         product.trackInventory && product.quantity === 0
                       }
                       onClick={() => handleAddToCart(product)}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                        product.trackInventory && product.quantity === 0
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
-                      }`}
+                      className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${product.trackInventory && product.quantity === 0
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-linear-to-r from-amber-600 to-amber-700 text-white hover:from-amber-700 hover:to-amber-800"
+                        }`}
                     >
                       {product.trackInventory && product.quantity === 0
                         ? "Out of Stock"
@@ -1123,11 +1100,10 @@ const Home = () => {
                     {[...Array(5)].map((_, star) => (
                       <FaStar
                         key={star}
-                        className={`${
-                          star < (product.averageRating || 0)
-                            ? "text-amber-400"
-                            : "text-amber-200"
-                        } text-[10px] md:text-xs`}
+                        className={`${star < (product.averageRating || 0)
+                          ? "text-amber-400"
+                          : "text-amber-200"
+                          } text-[10px] md:text-xs`}
                       />
                     ))}
                     <span className="text-[10px] text-amber-500 ml-1">
@@ -1157,11 +1133,10 @@ const Home = () => {
                       disabled={
                         product.trackInventory && product.quantity === 0
                       }
-                      className={`${
-                        product.trackInventory && product.quantity === 0
-                          ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
-                      } text-white p-1.5 rounded-lg transition`}
+                      className={`${product.trackInventory && product.quantity === 0
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
+                        } text-white p-1.5 rounded-lg transition`}
                     >
                       <FaShoppingCart className="text-xs" />
                     </button>
