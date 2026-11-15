@@ -10,6 +10,8 @@ import {
   FaHeart,
   FaSun,
   FaMoon,
+  FaTruck,
+  FaPhoneAlt,
 } from "react-icons/fa";
 import { FcAbout } from "react-icons/fc";
 import Link from "next/link";
@@ -119,7 +121,7 @@ const Navbar = () => {
             <polygon points="12 6 14 10 18 10 15 13 16 17 12 15 8 17 9 13 6 10 10 10 12 6" />
           </svg>
           <span className="flex items-center gap-1 font-bold text-[16px]">
-            Free shipping for all orders from $60.00
+            Free shipping for all orders from ৳1,000.00
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -140,7 +142,7 @@ const Navbar = () => {
             Summer sale discount 50% off
           </span>
           <span className="flex items-center gap-1 font-bold text-[16px]">
-            Free shipping for all orders from $60.00
+            Free shipping for all orders from ৳1,000.00
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -176,7 +178,7 @@ const Navbar = () => {
             <polygon points="12 6 14 10 18 10 15 13 16 17 12 15 8 17 9 13 6 10 10 10 12 6" />
           </svg>
           <span className="flex items-center gap-1 font-bold text-[16px]">
-            Free shipping for all orders from $60.00
+            Free shipping for all orders from ৳1,000.00
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -221,6 +223,27 @@ const Navbar = () => {
             className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
           >
             <FaShoppingCart className="w-4 h-4" /> Shop
+          </Link>
+
+          <Link
+            href="/track-order"
+            className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
+          >
+            <FaTruck className="w-4 h-4" /> Track Order
+          </Link>
+
+          <Link
+            href="/about"
+            className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
+          >
+            <FaInfoCircle className="w-4 h-4" /> About
+          </Link>
+
+          <Link
+            href="/contact"
+            className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
+          >
+            <FaPhoneAlt className="w-3.5 h-3.5" /> Contact
           </Link>
         </nav>
 
@@ -419,11 +442,27 @@ const Navbar = () => {
             </Link>
 
             <Link
+              href="/track-order"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+              onClick={toggleMobileMenu}
+            >
+              <FaTruck className="w-4 h-4 text-amber-500" /> Track Order
+            </Link>
+
+            <Link
               href="/about"
               className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
-              <FcAbout className="w-4 h-4" /> About
+              <FaInfoCircle className="w-4 h-4 text-amber-500" /> About
+            </Link>
+
+            <Link
+              href="/contact"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+              onClick={toggleMobileMenu}
+            >
+              <FaPhoneAlt className="w-4 h-4 text-amber-500" /> Contact
             </Link>
             {user ? (
               <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2 flex flex-col gap-2">

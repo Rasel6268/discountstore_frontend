@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   FaUser,
   FaShoppingBag,
@@ -18,9 +19,25 @@ import MyOrder from "@/components/User_dashboard/MyOrder";
 import Payments from "@/components/User_dashboard/Payments";
 import Tracking from "@/components/User_dashboard/Tracking";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/AuthProvider/AuthProvider";
 
-const Dashboard = () => {
+const DashboardContent = () => {
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
   const [active, setActive] = useState("profile");
+
+  useEffect(() => {
+    if (tabParam === "orders" || tabParam === "myorder" || tabParam === "My_Order") {
+      setActive("My_Order");
+    } else if (tabParam === "tracking") {
+      setActive("Tracking");
+    } else if (tabParam === "payments" || tabParam === "Payment") {
+      setActive("Payment");
+    } else if (tabParam === "profile") {
+      setActive("profile");
+    }
+  }, [tabParam]);
 
   const menuItems = [
     {
@@ -93,15 +110,15 @@ const Dashboard = () => {
                 {/* User Profile Summary */}
                 <div className="p-6 border-b border-amber-200">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-linear-to-br from-amber-600 to-amber-700 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-xl">JD</span>
+                    <div className="w-16 h-16 bg-linear-to-br from-amber-600 to-amber-700 rounded-2xl flex items-center justify-center shadow-lg text-white font-bold text-xl uppercase">
+                      {user?.name ? user.name.slice(0, 2) : "DS"}
                     </div>
-                    <div>
-                      <h2 className="font-bold text-gray-800 text-lg">
-                        John Doe
+                    <div className="truncate">
+                      <h2 className="font-bold text-gray-800 text-lg truncate">
+                        {user?.name || user?.fullName || "Valued Customer"}
                       </h2>
-                      <p className="text-gray-600 text-sm">
-                        john.doe@example.com
+                      <p className="text-gray-600 text-sm truncate">
+                        {user?.email || "customer@discountstorebd.com"}
                       </p>
                       <div className="flex items-center gap-1 mt-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -220,6 +237,20 @@ const Dashboard = () => {
         </div>
       </div>
     </ProtectedRoute>
+  );
+};
+
+const Dashboard = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-b-2 border-amber-500 rounded-full"></div>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 };
 

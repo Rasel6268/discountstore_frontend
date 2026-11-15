@@ -49,6 +49,7 @@ function ShopContent() {
     const data = categoriesData?.data || categoriesData || [];
     return data.map((cat) => ({
       name: cat.name,
+      slug: cat.slug,
       count: cat.productCount || 0,
       id: cat._id,
     }));
@@ -125,13 +126,19 @@ function ShopContent() {
     const categoryName = searchParams.get("categoryName");
 
     if (categoryParam && categories.length > 0) {
-      // Find the category in the categories list
-      const categoryExists = categories.some((cat) => cat.id === categoryParam);
+      // Find the category in the categories list by id, slug, or name
+      const foundCategory = categories.find(
+        (cat) =>
+          cat.id === categoryParam ||
+          cat.slug?.toLowerCase() === categoryParam?.toLowerCase() ||
+          cat.name?.toLowerCase() === categoryParam?.toLowerCase() ||
+          (categoryName && cat.name?.toLowerCase() === categoryName?.toLowerCase())
+      );
 
-      if (categoryExists) {
+      if (foundCategory) {
         setSelectedFilters((prev) => ({
           ...prev,
-          categories: [categoryParam],
+          categories: [foundCategory.id],
         }));
         setIsInitialized(true);
       }
@@ -195,12 +202,25 @@ function ShopContent() {
 
   const handleAddToCart = async (product) => {
     try {
+      const hasVariants =
+        (product.hasSizes && product.sizes && product.sizes.length > 0) ||
+        (product.hasColors && product.colors && product.colors.length > 0);
+
+      if (hasVariants) {
+        toast("Please select your preferred size and color options", { icon: "ℹ️" });
+        router.push(`/shop/${product._id}`);
+        return;
+      }
+
       const result = await addToCart({
         productId: product._id,
         name: product.name,
         price: product.discountPrice || product.regularPrice,
         quantity: 1,
-        image: product.images?.[0]?.url,
+        image:
+          product.images?.[0]?.variants?.thumbnail ||
+          product.images?.[0]?.url ||
+          (typeof product.images?.[0] === "string" ? product.images[0] : "/placeholder.png"),
       });
 
       if (result.success) {
@@ -560,9 +580,18 @@ function ShopContent() {
                           <div className="aspect-square w-full">
                             {product.images && product.images[0] ? (
                               <img
-                                src={product.images[0].url}
-                                alt={product.name}
+                                src={
+                                  product.images[0]?.variants?.medium ||
+                                  product.images[0]?.variants?.thumbnail ||
+                                  product.images[0]?.url ||
+                                  (typeof product.images[0] === "string" ? product.images[0] : "/placeholder.png")
+                                }
+                                alt={product.images[0]?.alt || product.name || "Product"}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = "/placeholder.png";
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-amber-100">
@@ -664,16 +693,24 @@ function ShopContent() {
                             </span>
                           </div>
 
-                          {/* Add to Cart Button */}
+                          {/* Add to Cart / Select Options Button */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              const isProductInCart = isInCart(product._id);
+                              const hasVariants =
+                                (product.hasSizes && product.sizes?.length > 0) ||
+                                (product.hasColors && product.colors?.length > 0);
 
+                              if (hasVariants) {
+                                toast("Please select size and color options", { icon: "ℹ️" });
+                                router.push(`/shop/${product._id}`);
+                                return;
+                              }
+
+                              const isProductInCart = isInCart(product._id);
                               if (isProductInCart) {
-                                window.location.href = "/cart";
+                                router.push("/cart");
                               } else {
-                                // Add to cart if not already in cart
                                 handleAddToCart(product);
                               }
                             }}
@@ -684,7 +721,13 @@ function ShopContent() {
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }`}
                           >
-                            {isInCart(product._id) ? (
+                            {(product.hasSizes && product.sizes?.length > 0) ||
+                            (product.hasColors && product.colors?.length > 0) ? (
+                              <>
+                                <FaShoppingCart className="text-xs" />
+                                Select Options
+                              </>
+                            ) : isInCart(product._id) ? (
                               <>
                                 <FaShoppingCart className="text-xs" />
                                 View Cart

@@ -449,11 +449,11 @@ const ProductsPage = () => {
   }, []);
 
   const formatPrice = useCallback((price) => {
-    if (price === undefined || price === null) return "$0.00";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(price);
+    if (price === undefined || price === null || isNaN(price)) return "৳0.00";
+    return `৳${Number(price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }, []);
 
   const SortIcon = useCallback(
@@ -731,7 +731,7 @@ const ProductsPage = () => {
                   <div className="flex gap-2">
                     <input
                       type="number"
-                      placeholder="Min Price"
+                      placeholder="Min Price (৳)"
                       value={filters.minPrice}
                       onChange={(e) =>
                         handleFilterChange("minPrice", e.target.value)
@@ -740,7 +740,7 @@ const ProductsPage = () => {
                     />
                     <input
                       type="number"
-                      placeholder="Max Price"
+                      placeholder="Max Price (৳)"
                       value={filters.maxPrice}
                       onChange={(e) =>
                         handleFilterChange("maxPrice", e.target.value)
@@ -901,9 +901,13 @@ const ProductsPage = () => {
                               <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                                 {product.images?.[0] ? (
                                   <img
-                                    src={product.images[0].url}
-                                    alt={product.name}
+                                    src={product.images[0]?.variants?.thumbnail || product.images[0]?.url || "/placeholder.png"}
+                                    alt={product.images[0]?.alt || product.name || "Product"}
                                     className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.onerror = null;
+                                      e.currentTarget.src = "/placeholder.png";
+                                    }}
                                   />
                                 ) : (
                                   <Package
@@ -1092,9 +1096,13 @@ const ProductsPage = () => {
                       {selectedProduct.images.map((img, idx) => (
                         <img
                           key={idx}
-                          src={img.url}
-                          alt={img.alt}
+                          src={img.variants?.medium || img.variants?.thumbnail || img.url || "/placeholder.png"}
+                          alt={img.alt || selectedProduct.name || "Product image"}
                           className="rounded-lg h-32 w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/placeholder.png";
+                          }}
                         />
                       ))}
                     </div>

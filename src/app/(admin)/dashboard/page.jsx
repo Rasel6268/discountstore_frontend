@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-  
   FaShoppingCart,
   FaUsers,
   FaBoxes,
@@ -10,9 +9,7 @@ import {
   FaRegClock,
   FaWallet,
 } from "react-icons/fa";
-import {
-  MdOutlineAttachMoney,
-} from "react-icons/md";
+import { FaBangladeshiTakaSign } from "react-icons/fa6";
 
 import DashboardSkeleton from "@/components/layout/admin/DashboardSkeleton";
 import AdminRoute from "@/components/ProtectedRoute/AdminRoute";
@@ -99,9 +96,9 @@ const Dashboard = () => {
         <div>
           <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
           <p className="text-2xl font-bold text-gray-800">
-            {typeof value === "number" && title.includes("Revenue")
-              ? `৳${value.toLocaleString()}`
-              : value.toLocaleString()}
+            {typeof value === "number" && (title.includes("Revenue") || title.includes("Sales") || title.includes("Value"))
+              ? `৳${Math.round(value).toLocaleString("en-US")}`
+              : typeof value === "number" ? value.toLocaleString("en-US") : value}
           </p>
           {change && (
             <div className="flex items-center gap-1 mt-2">
@@ -146,7 +143,7 @@ const Dashboard = () => {
           <StatCard
             title="Total Revenue"
             value={stats.totalRevenue}
-            icon={<MdOutlineAttachMoney />}
+            icon={<FaBangladeshiTakaSign />}
             change="12.5"
             changeType="up"
             color="green"

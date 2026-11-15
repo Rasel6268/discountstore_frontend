@@ -437,8 +437,12 @@ const CartPage = () => {
                                   {item.image ? (
                                     <img
                                       src={item.image}
-                                      alt={item.name}
+                                      alt={item.name || "Cart item"}
                                       className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = "/placeholder.png";
+                                      }}
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
@@ -448,7 +452,7 @@ const CartPage = () => {
                                 </div>
                                 <div>
                                   <Link
-                                    href={`/product/${item.productId}`}
+                                    href={`/shop/${item.productId}`}
                                     className="font-semibold text-gray-800 hover:text-amber-600 transition line-clamp-2"
                                   >
                                     {item.name}
@@ -686,8 +690,12 @@ const CartPage = () => {
                             {item.image ? (
                               <img
                                 src={item.image}
-                                alt={item.name}
+                                alt={item.name || "Saved item"}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = "/placeholder.png";
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">

@@ -11,7 +11,10 @@ import {
   FaChild,
   FaVenusMars,
   FaSpinner,
+  FaFileInvoiceDollar,
+  FaPrint,
 } from "react-icons/fa";
+import OrderInvoiceModal from "@/components/admin/OrderInvoiceModal";
 
 const AdminOrderPage = () => {
   const queryClient = useQueryClient();
@@ -19,6 +22,7 @@ const AdminOrderPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [statusNote, setStatusNote] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -414,9 +418,19 @@ const AdminOrderPage = () => {
                       <button
                         onClick={() => {
                           setSelectedOrder(order);
+                          setShowInvoiceModal(true);
+                        }}
+                        className="text-amber-600 hover:text-amber-800 mr-3 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                        title="Generate Official Invoice"
+                      >
+                        <FaFileInvoiceDollar size={13} /> Invoice
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order);
                           setShowViewModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-blue-600 hover:text-blue-900 mr-3 cursor-pointer"
                       >
                         View
                       </button>
@@ -426,13 +440,13 @@ const AdminOrderPage = () => {
                           setNewStatus(order.orderStatus);
                           setShowStatusModal(true);
                         }}
-                        className="text-green-600 hover:text-green-900 mr-3"
+                        className="text-green-600 hover:text-green-900 mr-3 cursor-pointer"
                       >
                         Update
                       </button>
                       <button
                         onClick={() => handleDeleteOrder(order._id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 cursor-pointer"
                       >
                         Delete
                       </button>
@@ -801,10 +815,10 @@ const AdminOrderPage = () => {
                   Update Status
                 </button>
                 <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  onClick={() => setShowInvoiceModal(true)}
+                  className="px-4 py-2 bg-linear-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 flex items-center gap-1.5 font-medium shadow-xs cursor-pointer"
                 >
-                  Print Order
+                  <FaFileInvoiceDollar size={15} /> Generate Invoice
                 </button>
               </div>
             </div>
@@ -879,6 +893,12 @@ const AdminOrderPage = () => {
             </div>
           </div>
         )}
+        {/* Commercial Order Invoice Modal */}
+        <OrderInvoiceModal
+          order={selectedOrder}
+          isOpen={showInvoiceModal}
+          onClose={() => setShowInvoiceModal(false)}
+        />
       </div>
     </AdminRoute>
   );

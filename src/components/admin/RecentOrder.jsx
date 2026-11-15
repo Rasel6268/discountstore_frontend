@@ -1,9 +1,13 @@
 import api from "@/config/api";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { FaFileInvoiceDollar } from "react-icons/fa";
+import OrderInvoiceModal from "@/components/admin/OrderInvoiceModal";
 
 const RecentOrder = () => {
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showInvoice, setShowInvoice] = useState(false);
   const getStatusBadge = (status) => {
     const statusConfig = {
       delivered: "bg-green-100 text-green-600",
@@ -105,10 +109,20 @@ const RecentOrder = () => {
                 </td>
 
                 {/* Action */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <td className="px-6 py-4 whitespace-nowrap text-sm flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setShowInvoice(true);
+                    }}
+                    className="text-amber-600 hover:text-amber-700 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                    title="Print Commercial Invoice"
+                  >
+                    <FaFileInvoiceDollar size={13} /> Invoice
+                  </button>
                   <Link
-                    href={`/orders/${order._id}`}
-                    className="text-amber-600 hover:text-amber-700 font-medium"
+                    href="/orders"
+                    className="text-blue-600 hover:text-blue-800 font-medium"
                   >
                     View
                   </Link>
@@ -118,6 +132,13 @@ const RecentOrder = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Commercial Invoice Modal */}
+      <OrderInvoiceModal
+        order={selectedOrder}
+        isOpen={showInvoice}
+        onClose={() => setShowInvoice(false)}
+      />
     </div>
   );
 };

@@ -79,7 +79,7 @@ const OrderConfirmationPage = () => {
 
     const fetchOrder = async () => {
       try {
-        const response = await api.get(`/orders/${orderId}`);
+        const response = await api.get(`/orders/track/${orderId}`);
         console.log("API Response:", response);
         
         if(response.data.success) {
@@ -226,10 +226,27 @@ const OrderConfirmationPage = () => {
                   Order Details
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Order ID: {order.orderNumber || order._id}
+                  Order ID: {order.orderId || order.orderNumber || order._id}
                 </p>
               </div>
-            
+
+              <div className="flex items-center gap-3 mt-4 md:mt-0">
+                <Link
+                  href={`/track-order?orderId=${order.orderId || order._id}`}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm"
+                >
+                  <FaTruck />
+                  Track Order
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-xs font-semibold transition flex items-center gap-2"
+                >
+                  <FaPrint />
+                  Print Receipt
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

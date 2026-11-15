@@ -176,11 +176,11 @@ export default function EditDiscountPage() {
   // Format coupon display text
   const getCouponDisplayText = (coupon) => {
     const discountText =
-      coupon.type === "percentage" ? `${coupon.value}%` : `$${coupon.value}`;
+      coupon.type === "percentage" ? `${coupon.value}%` : `৳${coupon.value}`;
 
     let details = [];
     if (coupon.minPurchase) {
-      details.push(`Min: $${coupon.minPurchase}`);
+      details.push(`Min: ৳${coupon.minPurchase}`);
     }
     if (coupon.userGroups && coupon.userGroups.length > 0) {
       details.push(`Groups: ${coupon.userGroups.join(", ")}`);
@@ -199,7 +199,7 @@ export default function EditDiscountPage() {
         value:
           coupon.type === "percentage"
             ? `${coupon.value}%`
-            : `$${coupon.value}`,
+            : `৳${coupon.value}`,
       },
       {
         label: "Type",
@@ -210,7 +210,7 @@ export default function EditDiscountPage() {
     if (coupon.minPurchase) {
       details.push({
         label: "Minimum Purchase",
-        value: `$${coupon.minPurchase}`,
+        value: `৳${coupon.minPurchase}`,
       });
     }
 

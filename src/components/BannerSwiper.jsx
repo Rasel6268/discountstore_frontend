@@ -14,6 +14,7 @@ import "swiper/css/effect-fade";
 
 const BannerSlider = () => {
   const router = useRouter();
+  const cdnBase = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://cdn.discountstorebd.com").replace(/\/$/, "");
 
   const banners = [
     {
@@ -26,7 +27,8 @@ const BannerSlider = () => {
         "Full-grain leather shoes engineered for timeless elegance, superior durability, and all-day comfort.",
       buttonText: "Shop Footwear",
       link: "/shop",
-      image: "https://ik.imagekit.io/efgitz1yf/banner_collection.jpg",
+      image: `${cdnBase}/banners/banner_collection.webp`,
+      fallbackImage: "https://ik.imagekit.io/efgitz1yf/banner_collection.jpg",
       badge: "Full-Grain Leather",
     },
     {
@@ -39,7 +41,8 @@ const BannerSlider = () => {
         "Rich cognac leather tote and crossbody bags accented with custom gold hardware and structured silhouettes.",
       buttonText: "Explore Handbags",
       link: "/shop",
-      image: "https://ik.imagekit.io/efgitz1yf/banner_handbag.jpg",
+      image: `${cdnBase}/banners/banner_handbag.webp`,
+      fallbackImage: "https://ik.imagekit.io/efgitz1yf/banner_handbag.jpg",
       badge: "Exclusive Design",
     },
     {
@@ -52,7 +55,8 @@ const BannerSlider = () => {
         "Elevate your signature wardrobe with masterfully tailored leather jackets, slim wallets, and durable belts.",
       buttonText: "Grab Deal",
       link: "/shop",
-      image: "https://ik.imagekit.io/efgitz1yf/banner_shoes.jpg",
+      image: `${cdnBase}/banners/banner_shoes.webp`,
+      fallbackImage: "https://ik.imagekit.io/efgitz1yf/banner_shoes.jpg",
       badge: "Limited Stock",
     },
   ];
@@ -104,6 +108,12 @@ const BannerSlider = () => {
                   priority={banner.id === 1}
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 80vw"
                   className="object-cover object-center transform scale-100 group-hover/slide:scale-105 transition-transform duration-1000 ease-out"
+                  onError={(e) => {
+                    if (banner.fallbackImage) {
+                      e.currentTarget.srcset = "";
+                      e.currentTarget.src = banner.fallbackImage;
+                    }
+                  }}
                 />
               </div>
 

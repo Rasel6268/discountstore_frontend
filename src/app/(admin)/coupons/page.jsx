@@ -340,13 +340,13 @@ const AdminCoupons = () => {
                             {coupon.type === "percentage"
                               ? `${coupon.value}%`
                               : coupon.type === "fixed"
-                                ? `$${coupon.value}`
+                                ? `৳${coupon.value}`
                                 : "Free"}
                           </span>
                           {coupon.maxDiscount &&
                             coupon.type === "percentage" && (
                               <p className="text-xs text-gray-500">
-                                Max: ${coupon.maxDiscount}
+                                Max: ৳{coupon.maxDiscount}
                               </p>
                             )}
                         </td>
@@ -517,7 +517,7 @@ const AdminCoupons = () => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                       >
                         <option value="percentage">Percentage (%)</option>
-                        <option value="fixed">Fixed Amount ($)</option>
+                        <option value="fixed">Fixed Amount (৳)</option>
                         <option value="free_shipping">Free Shipping</option>
                       </select>
                     </div>
@@ -546,7 +546,7 @@ const AdminCoupons = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Min. Purchase Amount ($)
+                        Min. Purchase Amount (৳)
                       </label>
                       <input
                         type="number"
@@ -566,7 +566,7 @@ const AdminCoupons = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Max Discount Amount ($)
+                        Max Discount Amount (৳)
                       </label>
                       <input
                         type="number"

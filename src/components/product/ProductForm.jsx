@@ -21,6 +21,9 @@ import {
   UploadCloud,
   Link,
   Trash2,
+  ArrowLeft,
+  ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 import api from "@/config/api";
 import toast from "react-hot-toast";
@@ -96,7 +99,9 @@ const ProductForm = ({
   const [colorEnabled, setColorEnabled] = useState(false);
   const [uploadMode, setUploadMode] = useState("device"); // "device" | "url"
   const [isDragging, setIsDragging] = useState(false);
+  const [replaceIndex, setReplaceIndex] = useState(null);
   const fileInputRef = useRef(null);
+  const replaceInputRef = useRef(null);
 
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -282,6 +287,7 @@ const ProductForm = ({
   };
 
   const {
+    uploadImage,
     uploadMultipleImages,
     uploading: uploadingImages,
     progress: uploadProgress,
@@ -292,13 +298,15 @@ const ProductForm = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const uploadedImages = await uploadMultipleImages(files, "/products");
+    const uploadedImages = await uploadMultipleImages(files, "products");
     if (uploadedImages && uploadedImages.length > 0) {
       const newImages = uploadedImages.map((img, i) => ({
         url: img.url,
-        fileId: img.fileId,
+        key: img.key || img.fileId,
+        fileId: img.fileId || img.key,
         alt: img.name || formData.name || "",
         isPrimary: formData.images.length === 0 && i === 0,
+        variants: img.variants || {},
       }));
       setFormData((prev) => ({
         ...prev,
@@ -330,13 +338,15 @@ const ProductForm = ({
     const files = e.dataTransfer.files;
     if (!files || files.length === 0) return;
 
-    const uploadedImages = await uploadMultipleImages(files, "/products");
+    const uploadedImages = await uploadMultipleImages(files, "products");
     if (uploadedImages && uploadedImages.length > 0) {
       const newImages = uploadedImages.map((img, i) => ({
         url: img.url,
-        fileId: img.fileId,
+        key: img.key || img.fileId,
+        fileId: img.fileId || img.key,
         alt: img.name || formData.name || "",
         isPrimary: formData.images.length === 0 && i === 0,
+        variants: img.variants || {},
       }));
       setFormData((prev) => ({
         ...prev,
@@ -349,8 +359,10 @@ const ProductForm = ({
     if (imageInput.url) {
       const newImage = {
         url: imageInput.url,
+        key: "",
         alt: imageInput.alt,
         isPrimary: formData.images.length === 0,
+        variants: {},
       };
       setFormData((prev) => ({
         ...prev,
@@ -362,13 +374,20 @@ const ProductForm = ({
 
   const handleRemoveImage = (index) => {
     const imgToRemove = formData.images[index];
-    if (imgToRemove?.fileId) {
-      deleteImage(imgToRemove.fileId);
+    const identifier = imgToRemove?.key || imgToRemove?.fileId;
+    if (identifier) {
+      deleteImage(identifier);
     }
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
+    setFormData((prev) => {
+      const filtered = prev.images.filter((_, i) => i !== index);
+      if (imgToRemove?.isPrimary && filtered.length > 0) {
+        filtered[0] = { ...filtered[0], isPrimary: true };
+      }
+      return {
+        ...prev,
+        images: filtered,
+      };
+    });
   };
 
   const handleSetPrimaryImage = (index) => {
@@ -379,6 +398,63 @@ const ProductForm = ({
         isPrimary: i === index,
       })),
     }));
+  };
+
+  // Reordering images (move left / right)
+  const handleMoveImage = (index, direction) => {
+    const newImages = [...formData.images];
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= newImages.length) return;
+    const temp = newImages[index];
+    newImages[index] = newImages[targetIndex];
+    newImages[targetIndex] = temp;
+    setFormData((prev) => ({
+      ...prev,
+      images: newImages,
+    }));
+  };
+
+  // Trigger replacement of a specific image
+  const handleStartReplace = (index) => {
+    setReplaceIndex(index);
+    if (replaceInputRef.current) {
+      replaceInputRef.current.click();
+    }
+  };
+
+  // Handle file selected for replacing a specific image
+  const handleReplaceFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || replaceIndex === null) return;
+
+    const oldImage = formData.images[replaceIndex];
+    const uploaded = await uploadImage(file, "products");
+    if (uploaded) {
+      // Safely delete old image from storage
+      const oldIdentifier = oldImage?.key || oldImage?.fileId;
+      if (oldIdentifier) {
+        deleteImage(oldIdentifier);
+      }
+
+      setFormData((prev) => {
+        const updated = [...prev.images];
+        updated[replaceIndex] = {
+          url: uploaded.url,
+          key: uploaded.key || uploaded.fileId,
+          fileId: uploaded.fileId || uploaded.key,
+          alt: uploaded.name || oldImage?.alt || formData.name || "",
+          isPrimary: oldImage?.isPrimary || false,
+          variants: uploaded.variants || {},
+        };
+        return { ...prev, images: updated };
+      });
+      toast.success("Image replaced successfully!");
+    }
+
+    setReplaceIndex(null);
+    if (replaceInputRef.current) {
+      replaceInputRef.current.value = "";
+    }
   };
 
   const validateForm = () => {
@@ -681,7 +757,7 @@ const ProductForm = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Regular Price <span className="text-red-500">*</span>
+                Regular Price (৳ BDT) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -692,7 +768,7 @@ const ProductForm = ({
                 min="0"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
-                placeholder="0.00"
+                placeholder="790.00"
               />
               {errors.regularPrice && (
                 <p className="text-red-500 text-xs mt-1">{errors.regularPrice}</p>
@@ -701,7 +777,7 @@ const ProductForm = ({
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Discount Price
+                Discount Price (৳ BDT)
               </label>
               <input
                 type="number"
@@ -712,7 +788,7 @@ const ProductForm = ({
                 min="0"
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 disabled={isLoading}
-                placeholder="0.00"
+                placeholder="590.00"
               />
               {errors.discountPrice && (
                 <p className="text-red-500 text-xs mt-1">{errors.discountPrice}</p>
@@ -721,7 +797,7 @@ const ProductForm = ({
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Cost Per Item
+                Cost Per Item (৳ BDT)
               </label>
               <input
                 type="number"
@@ -1103,8 +1179,16 @@ const ProductForm = ({
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                 onChange={handleImageFilesSelected}
+                disabled={uploadingImages || isLoading}
+                className="hidden"
+              />
+              <input
+                ref={replaceInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                onChange={handleReplaceFileSelected}
                 disabled={uploadingImages || isLoading}
                 className="hidden"
               />
@@ -1125,10 +1209,10 @@ const ProductForm = ({
                     <Loader2 className="w-10 h-10 text-pink-600 animate-spin" />
                     <div>
                       <p className="text-sm font-semibold text-gray-800">
-                        Uploading to ImageKit... {uploadProgress}%
+                        Uploading to Cloudflare R2... {uploadProgress}%
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        Please wait while your image files are uploaded
+                        Optimizing WebP variants and streaming to Cloudflare R2
                       </p>
                     </div>
                     <div className="w-64 bg-gray-200 rounded-full h-2.5 overflow-hidden mt-1">
@@ -1148,7 +1232,7 @@ const ProductForm = ({
                         Drag & Drop image files here
                       </h4>
                       <p className="text-xs text-gray-500 mt-1 max-w-sm">
-                        Supports multiple files selection: JPG, PNG, WEBP, GIF, SVG (up to 10MB each)
+                        Supports multiple files: JPG, PNG, WEBP, GIF, AVIF (optimized to WebP on Cloudflare R2)
                       </p>
                     </div>
                     <button
@@ -1224,11 +1308,15 @@ const ProductForm = ({
                         : "border-gray-200 hover:border-gray-300"
                       }`}
                   >
-                    <div className="h-32 w-full bg-gray-50 flex items-center justify-center overflow-hidden">
+                    <div className="h-32 w-full bg-gray-50 flex items-center justify-center overflow-hidden relative">
                       <img
-                        src={img.url}
+                        src={img.variants?.thumbnail || img.variants?.medium || img.url}
                         alt={img.alt || "Product image"}
                         className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/placeholder.png";
+                        }}
                       />
                     </div>
 
@@ -1237,6 +1325,36 @@ const ProductForm = ({
                         Primary Cover
                       </span>
                     )}
+
+                    {/* Quick Action Overlay on hover: Reorder & Replace */}
+                    <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-xs p-1 rounded-lg">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveImage(idx, -1)}
+                        disabled={idx === 0}
+                        title="Move image left"
+                        className="p-1 text-white hover:text-pink-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ArrowLeft size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveImage(idx, 1)}
+                        disabled={idx === formData.images.length - 1}
+                        title="Move image right"
+                        className="p-1 text-white hover:text-pink-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <ArrowRight size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStartReplace(idx)}
+                        title="Replace this image"
+                        className="p-1 text-white hover:text-cyan-300 cursor-pointer"
+                      >
+                        <RefreshCw size={13} />
+                      </button>
+                    </div>
 
                     <div className="p-2.5 bg-white flex items-center justify-between gap-1 border-t border-gray-100">
                       {!img.isPrimary ? (
@@ -1252,14 +1370,24 @@ const ProductForm = ({
                           Cover Photo
                         </span>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(idx)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
-                        title="Remove image"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleStartReplace(idx)}
+                          className="p-1.5 text-gray-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-md transition cursor-pointer"
+                          title="Replace image"
+                        >
+                          <RefreshCw size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition cursor-pointer"
+                          title="Remove image"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

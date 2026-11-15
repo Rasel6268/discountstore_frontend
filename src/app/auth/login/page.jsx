@@ -54,7 +54,7 @@ export default function LoginPage() {
           />
 
           <div className="text-right mb-6">
-            <Link href="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700">
+            <Link href="/auth/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700">
               Forgot password?
             </Link>
           </div>

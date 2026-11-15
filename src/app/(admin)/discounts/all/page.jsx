@@ -165,7 +165,7 @@ export default function DiscountsListPage() {
     if (coupon.type === 'percentage') {
       return `${coupon.value}% OFF`;
     } else if (coupon.type === 'fixed') {
-      return `$${coupon.value} OFF`;
+      return `৳${coupon.value} OFF`;
     }
     return 'No coupon';
   };
@@ -326,7 +326,7 @@ export default function DiscountsListPage() {
                             </div>
                             {discount.coupon.minPurchase && (
                               <div className="text-xs text-gray-400">
-                                Min: ${discount.coupon.minPurchase}
+                                Min: ৳{discount.coupon.minPurchase}
                               </div>
                             )}
                             {discount.coupon.userGroups && discount.coupon.userGroups.length > 0 && (

@@ -154,12 +154,25 @@ const Home = () => {
         return;
       }
 
+      const hasVariants =
+        (product.hasSizes && product.sizes && product.sizes.length > 0) ||
+        (product.hasColors && product.colors && product.colors.length > 0);
+
+      if (hasVariants) {
+        toast("Please select your preferred size and color options", { icon: "ℹ️" });
+        router.push(`/shop/${product._id}`);
+        return;
+      }
+
       const result = await addToCart({
         productId: product._id,
         name: product.name,
         price: product.discountPrice || product.regularPrice,
         quantity: 1,
-        image: product.images?.[0]?.url,
+        image:
+          product.images?.[0]?.variants?.thumbnail ||
+          product.images?.[0]?.url ||
+          (typeof product.images?.[0] === "string" ? product.images[0] : "/placeholder.png"),
       });
 
       if (result.success) {
@@ -358,10 +371,12 @@ const Home = () => {
                                 <Link href={`/shop/${product._id}`}>
                                   <Image
                                     src={
+                                      product.images?.[0]?.variants?.medium ||
+                                      product.images?.[0]?.variants?.thumbnail ||
                                       product.images?.[0]?.url ||
                                       "/placeholder.png"
                                     }
-                                    alt={product.name || "Product"}
+                                    alt={product.images?.[0]?.alt || product.name || "Product"}
                                     width={300}
                                     height={150}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -721,9 +736,12 @@ const Home = () => {
                   <div className="aspect-4/3 w-full cursor-pointer overflow-hidden rounded-t-2xl">
                     <Image
                       src={
-                        product.images?.[0]?.url || "/placeholder-product.jpg"
+                        product.images?.[0]?.variants?.medium ||
+                        product.images?.[0]?.variants?.thumbnail ||
+                        product.images?.[0]?.url ||
+                        "/placeholder-product.jpg"
                       }
-                      alt={product.name}
+                      alt={product.images?.[0]?.alt || product.name || "Product"}
                       width={600}
                       height={450}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -782,6 +800,9 @@ const Home = () => {
                   >
                     {product.trackInventory && product.quantity === 0
                       ? "Out of Stock"
+                      : (product.hasSizes && product.sizes?.length > 0) ||
+                        (product.hasColors && product.colors?.length > 0)
+                      ? "Select Options"
                       : "Add to Cart"}
                   </button>
 
@@ -933,9 +954,12 @@ const Home = () => {
                   <div className="aspect-4/3 w-full cursor-pointer overflow-hidden rounded-t-xl md:rounded-t-2xl">
                     <Image
                       src={
-                        product.images?.[0]?.url || "/placeholder-product.jpg"
+                        product.images?.[0]?.variants?.medium ||
+                        product.images?.[0]?.variants?.thumbnail ||
+                        product.images?.[0]?.url ||
+                        "/placeholder-product.jpg"
                       }
-                      alt={product.name}
+                      alt={product.images?.[0]?.alt || product.name || "Product"}
                       width={600}
                       height={450}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -989,6 +1013,9 @@ const Home = () => {
                     >
                       {product.trackInventory && product.quantity === 0
                         ? "Out of Stock"
+                        : (product.hasSizes && product.sizes?.length > 0) ||
+                          (product.hasColors && product.colors?.length > 0)
+                        ? "Select Options"
                         : "Add to Cart"}
                     </button>
                   </div>
@@ -1069,9 +1096,12 @@ const Home = () => {
                   <div className="aspect-4/3 w-full cursor-pointer overflow-hidden">
                     <Image
                       src={
-                        product.images?.[0]?.url || "/placeholder-product.jpg"
+                        product.images?.[0]?.variants?.medium ||
+                        product.images?.[0]?.variants?.thumbnail ||
+                        product.images?.[0]?.url ||
+                        "/placeholder-product.jpg"
                       }
-                      alt={product.name}
+                      alt={product.images?.[0]?.alt || product.name || "Product"}
                       width={600}
                       height={450}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"

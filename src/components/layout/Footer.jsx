@@ -8,6 +8,7 @@ import {
   FaInstagram,
   FaLinkedinIn,
   FaYoutube,
+  FaWhatsapp,
   FaCcVisa,
   FaCcMastercard,
   FaCcAmex,
@@ -72,34 +73,36 @@ const Footer = () => {
             {/* Social Links */}
             <div className="flex gap-3">
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61574698905110"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook Page"
                 className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-500 transition-colors duration-300 group"
               >
                 <FaFacebookF className="text-gray-400 text-sm group-hover:text-white" />
               </a>
               <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-500 transition-colors duration-300 group"
+                href="https://wa.me/8801628159291"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp Chat"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors duration-300 group"
               >
-                <FaTwitter className="text-gray-400 text-sm group-hover:text-white" />
+                <FaWhatsapp className="text-gray-400 text-base group-hover:text-white" />
               </a>
               <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-500 transition-colors duration-300 group"
+                href="mailto:Nurhossain122@gmail.com"
+                aria-label="Send Email"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors duration-300 group"
               >
-                <FaInstagram className="text-gray-400 text-sm group-hover:text-white" />
+                <MdEmail className="text-gray-400 text-base group-hover:text-white" />
               </a>
               <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-500 transition-colors duration-300 group"
+                href="tel:+8801628159291"
+                aria-label="Call Helpline"
+                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-600 transition-colors duration-300 group"
               >
-                <FaLinkedinIn className="text-gray-400 text-sm group-hover:text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-amber-500 transition-colors duration-300 group"
-              >
-                <FaYoutube className="text-gray-400 text-sm group-hover:text-white" />
+                <MdPhone className="text-gray-400 text-base group-hover:text-white" />
               </a>
             </div>
           </div>
@@ -155,24 +158,37 @@ const Footer = () => {
 
             <div className="space-y-4 mb-6">
               <div className="flex items-start gap-3">
-                <MdLocationOn className="text-amber-400 text-lg mt-0.5" />
+                <MdLocationOn className="text-amber-400 text-lg mt-0.5 shrink-0" />
                 <p className="text-gray-400 text-sm">
-                  123 Leather Street, Fashion District, Dhaka, Bangladesh
+                  Madina Tannery, Tin Mazar, Tannery Mor, Hazaribagh, Dhaka, Bangladesh
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <MdPhone className="text-amber-400 text-lg" />
-                <p className="text-gray-400 text-sm">+880 1234 567890</p>
+                <MdPhone className="text-amber-400 text-lg shrink-0" />
+                <a href="tel:+8801628159291" className="text-gray-400 hover:text-amber-400 text-sm transition">
+                  +880 1628-159291
+                </a>
               </div>
               <div className="flex items-center gap-3">
-                <MdEmail className="text-amber-400 text-lg" />
-                <p className="text-gray-400 text-sm">
-                  support@discountStore.com
-                </p>
+                <FaWhatsapp className="text-emerald-400 text-base shrink-0" />
+                <a
+                  href="https://wa.me/8801628159291"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 hover:text-emerald-400 text-sm transition"
+                >
+                  WhatsApp: +880 1628-159291
+                </a>
               </div>
               <div className="flex items-center gap-3">
-                <MdAccessTime className="text-amber-400 text-lg" />
-                <p className="text-gray-400 text-sm">Mon-Sat: 9AM - 8PM</p>
+                <MdEmail className="text-amber-400 text-lg shrink-0" />
+                <a href="mailto:Nurhossain122@gmail.com" className="text-gray-400 hover:text-amber-400 text-sm transition truncate">
+                  Nurhossain122@gmail.com
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <MdAccessTime className="text-amber-400 text-lg shrink-0" />
+                <p className="text-gray-400 text-sm">Sat-Thu: 9AM - 10PM</p>
               </div>
             </div>
           </div>

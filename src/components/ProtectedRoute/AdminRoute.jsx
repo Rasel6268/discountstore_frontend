@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/AuthProvider/AuthProvider';
-
+import AuthLoading from '@/components/AuthLoading';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -13,7 +13,7 @@ const AdminRoute = ({ children }) => {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push(`/user/login?redirect=${encodeURIComponent(pathname)}`);
+        router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
       } else if (user.role !== 'admin') {
         router.push('/');
       }

@@ -69,6 +69,9 @@ const AuthProvider = ({ children }) => {
       });
 
       const userData = res.data.user;
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+      }
       setUser(userData);
       toast.success(`Welcome back, ${userData.name}!`);
 
@@ -111,6 +114,7 @@ const AuthProvider = ({ children }) => {
 
     try {
       const res = await api.post("/auth/logout");
+      localStorage.removeItem("token");
       setUser(null);
       toast.success("Logged out successfully");
       router.push("/auth/login");

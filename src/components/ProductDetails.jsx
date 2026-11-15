@@ -243,6 +243,7 @@ const ProductDetailsPage = () => {
 
   // Color selection states
   const [selectedColor, setSelectedColor] = useState(null);
+  const [selectionErrors, setSelectionErrors] = useState({ size: false, color: false });
 
   useEffect(() => {
     if (id) {
@@ -265,7 +266,8 @@ const ProductDetailsPage = () => {
   const fetchProductDetails = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/products/${id}`);
+      const cleanId = typeof id === "string" ? id.replace(/\/+$/, "").trim() : id;
+      const response = await api.get(`/products/${cleanId}`);
       const productData = response.data.data || response.data;
       
       if (!productData) {
@@ -273,27 +275,9 @@ const ProductDetailsPage = () => {
       }
       
       setProduct(productData);
-
-      // Auto-select first available size
-      if (productData.hasSizes && productData.sizes?.length > 0) {
-        const availableSizes = productData.sizes.filter(
-          (s) =>  s.quantity > 0,
-        );
-        if (availableSizes.length > 0) {
-          setSelectedSize(availableSizes[0]);
-          setSizeStock(availableSizes[0].quantity);
-          setSizeExtraPrice(availableSizes[0].extraPrice || 0);
-        }
-      }
-
-      // Auto-select first available color
-      if (productData.hasColors && productData.colors?.length > 0) {
-        // Removed quantity/active filters since they aren't on the Color Schema
-        const availableColors = productData.colors;
-        if (availableColors.length > 0) {
-          setSelectedColor(availableColors[0]);
-        }
-      }
+      setSelectedSize(null);
+      setSelectedColor(null);
+      setSelectionErrors({ size: false, color: false });
 
       if (productData.category?._id || productData.category) {
         fetchRelatedProducts(productData.category._id || productData.category);
@@ -328,11 +312,13 @@ const ProductDetailsPage = () => {
     setSelectedSize(size);
     setSizeStock(size.quantity);
     setSizeExtraPrice(size.extraPrice || 0);
-    setQuantity(1); 
+    setQuantity(1);
+    setSelectionErrors((prev) => ({ ...prev, size: false }));
   };
 
   const handleColorSelect = (color) => {
     setSelectedColor(color);
+    setSelectionErrors((prev) => ({ ...prev, color: false }));
   };
 
   const getSizesByType = useMemo(() => {
@@ -416,16 +402,26 @@ const ProductDetailsPage = () => {
   }, [product?.regularPrice, selectedSize]);
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product) return false;
 
-    if (product.hasSizes && !selectedSize) {
-      toast.error("Please select a size");
-      return;
+    let hasError = false;
+    const newErrors = { size: false, color: false };
+
+    if (product.hasSizes && product.sizes?.length > 0 && !selectedSize) {
+      toast.error("Please select a size first");
+      newErrors.size = true;
+      hasError = true;
     }
 
-    if (product.hasColors && !selectedColor) {
-      toast.error("Please select a color");
-      return;
+    if (product.hasColors && product.colors?.length > 0 && !selectedColor) {
+      toast.error("Please select a color first");
+      newErrors.color = true;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setSelectionErrors(newErrors);
+      return false;
     }
 
     const currentStock = product.hasSizes ? sizeStock : product?.quantity || 0;
@@ -435,7 +431,7 @@ const ProductDetailsPage = () => {
           ? "Selected size is out of stock"
           : "Product is out of stock",
       );
-      return;
+      return false;
     }
 
     const cartItem = {
@@ -443,7 +439,7 @@ const ProductDetailsPage = () => {
       name: product.name,
       price: getCurrentPrice,
       quantity: quantity,
-      image: product.images?.[0]?.url || product.images?.[0],
+      image: product.images?.[0]?.variants?.thumbnail || product.images?.[0]?.url || product.images?.[0] || '/placeholder.png',
       sku: product.sku,
       size: selectedSize
         ? {
@@ -469,13 +465,15 @@ const ProductDetailsPage = () => {
     message += " added to cart!";
 
     toast.success(message);
+    return true;
   };
 
   const handleBuyNow = () => {
-    handleAddToCart();
+    const success = handleAddToCart();
+    if (!success) return;
     setTimeout(() => {
       router.push("/checkout");
-    }, 500);
+    }, 300);
   };
 
   const handleWishlist = () => {
@@ -489,7 +487,7 @@ const ProductDetailsPage = () => {
         productId: product._id,
         name: product.name,
         price: product.discountPrice || product.regularPrice || product.price,
-        image: product.images?.[0]?.url || product.images?.[0],
+        image: product.images?.[0]?.variants?.thumbnail || product.images?.[0]?.url || product.images?.[0] || '/placeholder.png',
       });
       toast.success(`${product.name} added to wishlist!`);
     }
@@ -656,9 +654,11 @@ const ProductDetailsPage = () => {
                       src={
                         typeof product.images[selectedImage] === "string"
                           ? product.images[selectedImage]
-                          : product.images[selectedImage].url
+                          : product.images[selectedImage]?.variants?.large ||
+                            product.images[selectedImage]?.url ||
+                            "/placeholder.png"
                       }
-                      alt={product.name}
+                      alt={product.images[selectedImage]?.alt || product.name || "Product image"}
                       fill
                       className="object-cover transition-transform duration-500 hover:scale-105"
                       sizes="(max-width: 768px) 100vw, 50vw"
@@ -725,7 +725,11 @@ const ProductDetailsPage = () => {
                         aria-label={`View product image ${index + 1}`}
                       >
                         <Image
-                          src={typeof image === "string" ? image : image.url}
+                          src={
+                            typeof image === "string"
+                              ? image
+                              : image?.variants?.thumbnail || image?.variants?.medium || image?.url || "/placeholder.png"
+                          }
                           alt={`${product.name} view ${index + 1}`}
                           fill
                           className="object-cover"
@@ -788,12 +792,28 @@ const ProductDetailsPage = () => {
 
                 {/* Color Selection Section */}
                 {product.hasColors && product.colors?.length > 0 && (
-                  <div className="space-y-4 border-t border-gray-200 pt-4">
-                    <div className="flex items-center gap-2">
-                      <FaPalette className="text-amber-500" aria-hidden="true" />
-                      <h3 className="font-semibold text-gray-800">
-                        Select Color
-                      </h3>
+                  <div
+                    className={`space-y-4 border-t pt-4 rounded-xl transition-all ${
+                      selectionErrors.color
+                        ? "border-red-400 bg-red-50/60 p-4 border"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FaPalette
+                          className={selectionErrors.color ? "text-red-500" : "text-amber-500"}
+                          aria-hidden="true"
+                        />
+                        <h3 className={`font-semibold ${selectionErrors.color ? "text-red-700" : "text-gray-800"}`}>
+                          Select Color <span className="text-red-500">*</span>
+                        </h3>
+                      </div>
+                      {selectedColor && (
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          Selected: {selectedColor.name}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap gap-3">
@@ -813,7 +833,7 @@ const ProductDetailsPage = () => {
                             <div
                               className={`w-12 h-12 rounded-full border-2 transition-all ${
                                 selectedColor?.name === color.name
-                                  ? "border-amber-500 shadow-lg"
+                                  ? "border-amber-500 ring-2 ring-amber-300 shadow-lg"
                                   : "border-gray-300 group-hover:border-amber-400"
                               }`}
                               style={{
@@ -824,7 +844,7 @@ const ProductDetailsPage = () => {
                             <span
                               className={`text-xs transition-colors ${
                                 selectedColor?.name === color.name
-                                  ? "text-amber-600 font-medium"
+                                  ? "text-amber-600 font-bold"
                                   : "text-gray-600 group-hover:text-amber-500"
                               }`}
                             >
@@ -835,14 +855,9 @@ const ProductDetailsPage = () => {
                       })}
                     </div>
 
-                    {product.hasColors && !selectedColor && (
-                      <p className="text-sm text-red-500" role="alert">
-                        Please select a color to continue
-                      </p>
-                    )}
-                    {selectedColor && (
-                      <p className="text-sm text-green-600">
-                        Selected: {selectedColor.name}
+                    {selectionErrors.color && !selectedColor && (
+                      <p className="text-xs font-semibold text-red-600 flex items-center gap-1 mt-1" role="alert">
+                        ⚠️ Please choose a color before purchasing or adding to cart.
                       </p>
                     )}
                   </div>
@@ -850,13 +865,31 @@ const ProductDetailsPage = () => {
 
                 {/* Size Selection Section */}
                 {product.hasSizes && hasAnySizes && (
-                  <div className="space-y-4 border-t border-gray-200 pt-4">
-                    <div className="flex items-center gap-2">
-                      <FaVenusMars className="text-amber-500" aria-hidden="true" />
-                      <h3 className="font-semibold text-gray-800">Select Size</h3>
+                  <div
+                    className={`space-y-4 border-t pt-4 rounded-xl transition-all ${
+                      selectionErrors.size
+                        ? "border-red-400 bg-red-50/60 p-4 border"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FaVenusMars
+                          className={selectionErrors.size ? "text-red-500" : "text-amber-500"}
+                          aria-hidden="true"
+                        />
+                        <h3 className={`font-semibold ${selectionErrors.size ? "text-red-700" : "text-gray-800"}`}>
+                          Select Size <span className="text-red-500">*</span>
+                        </h3>
+                        {selectedSize && (
+                          <span className="text-xs text-gray-500 ml-2">
+                            ({sizeStock} available)
+                          </span>
+                        )}
+                      </div>
                       {selectedSize && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          ({sizeStock} available)
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          Selected: {selectedSize.name}
                         </span>
                       )}
                     </div>
@@ -877,7 +910,7 @@ const ProductDetailsPage = () => {
                                 onClick={() => handleSizeSelect(size)}
                                 className={`px-4 py-2 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
                                   selectedSize?.name === size.name
-                                    ? "border-amber-500 bg-amber-50 text-amber-700"
+                                    ? "border-amber-500 bg-amber-50 text-amber-700 font-bold shadow-xs"
                                     : "border-gray-300 hover:border-amber-300 text-gray-700"
                                 }`}
                                 aria-label={`Select size ${size.name}`}
@@ -896,9 +929,9 @@ const ProductDetailsPage = () => {
                       )
                     )}
 
-                    {product.hasSizes && !selectedSize && (
-                      <p className="text-sm text-red-500" role="alert">
-                        Please select a size to continue
+                    {selectionErrors.size && !selectedSize && (
+                      <p className="text-xs font-semibold text-red-600 flex items-center gap-1 mt-1" role="alert">
+                        ⚠️ Please choose a size before purchasing or adding to cart.
                       </p>
                     )}
                   </div>
@@ -965,20 +998,36 @@ const ProductDetailsPage = () => {
                   )}
                 </div>
 
+                {/* Selection Required Alert Banner */}
+                {((product.hasSizes && product.sizes?.length > 0 && !selectedSize) ||
+                  (product.hasColors && product.colors?.length > 0 && !selectedColor)) &&
+                  (selectionErrors.size || selectionErrors.color) && (
+                    <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-xs font-semibold text-red-700 flex items-center gap-2">
+                      <span className="text-base">⚠️</span>
+                      <span>
+                        Please select {selectionErrors.size && selectionErrors.color
+                          ? "both size and color"
+                          : selectionErrors.size
+                          ? "a size"
+                          : "a color"} above before proceeding.
+                      </span>
+                    </div>
+                  )}
+
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3 pt-4">
                   <button
                     onClick={handleAddToCart}
-                    disabled={!isInStock || (product.hasSizes && !selectedSize)}
-                    className="flex-1 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={!isInStock}
+                    className="flex-1 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer shadow-md"
                     aria-label="Add to cart"
                   >
                     <FaShoppingCart aria-hidden="true" /> Add to Cart
                   </button>
                   <button
                     onClick={handleBuyNow}
-                    disabled={!isInStock || (product.hasSizes && !selectedSize)}
-                    className="flex-1 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    disabled={!isInStock}
+                    className="flex-1 py-3 bg-gray-900 text-white rounded-lg hover:bg-black transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md"
                     aria-label="Buy now"
                   >
                     Buy Now
@@ -1058,7 +1107,7 @@ const ProductDetailsPage = () => {
                 hidden={activeTab !== "description"}
               >
                 {activeTab === "description" && (
-                  <div className="prose max-w-none text-gray-600">
+                  <div className="prose max-w-none text-gray-600 whitespace-pre-line leading-relaxed">
                     {product.description ? (
                       <div
                         dangerouslySetInnerHTML={{ __html: product.description }}
@@ -1262,8 +1311,14 @@ const ProductDetailsPage = () => {
                       <Link href={`/shop/${related._id}`}>
                         <div className="aspect-square relative overflow-hidden bg-gray-50">
                           <Image
-                            src={related.images?.[0]?.url || related.images?.[0] || '/placeholder.png'}
-                            alt={related.name}
+                            src={
+                              related.images?.[0]?.variants?.medium ||
+                              related.images?.[0]?.variants?.thumbnail ||
+                              related.images?.[0]?.url ||
+                              related.images?.[0] ||
+                              '/placeholder.png'
+                            }
+                            alt={related.images?.[0]?.alt || related.name || 'Related product'}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                             sizes="(max-width: 768px) 50vw, 25vw"

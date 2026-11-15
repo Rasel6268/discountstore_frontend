@@ -8,16 +8,16 @@ const useImageUpload = () => {
   const [error, setError] = useState(null);
 
   /**
-   * Upload a single image to ImageKit via backend
+   * Upload a single image to Cloudflare R2 via backend
    * @param {File} file - Image file object
-   * @param {string} folder - Destination folder on ImageKit (default: '/products')
-   * @returns {Promise<{ url: string, fileId: string, name: string, thumbnailUrl: string } | null>}
+   * @param {string} folder - Destination folder (default: 'products')
+   * @returns {Promise<{ url: string, key: string, fileId: string, name: string, variants: Object, thumbnailUrl: string } | null>}
    */
-  const uploadImage = async (file, folder = '/products') => {
+  const uploadImage = async (file, folder = 'products') => {
     if (!file) return null;
 
     if (!file.type.startsWith('image/')) {
-      const msg = 'Please select a valid image file.';
+      const msg = 'Please select a valid image file (JPEG, PNG, WEBP, GIF, AVIF).';
       toast.error(msg);
       setError(msg);
       return null;
@@ -37,7 +37,7 @@ const useImageUpload = () => {
 
     const formData = new FormData();
     formData.append('image', file);
-    formData.append('folder', folder);
+    formData.append('folder', folder.replace(/^\//, ''));
 
     try {
       const response = await api.post('/upload', formData, {
@@ -55,7 +55,15 @@ const useImageUpload = () => {
       });
 
       setProgress(100);
-      return response.data?.data;
+      const data = response.data?.data || response.data;
+      return {
+        url: data.url,
+        key: data.key || data.fileId,
+        fileId: data.key || data.fileId,
+        name: data.name,
+        variants: data.variants || {},
+        thumbnailUrl: data.variants?.thumbnail || data.thumbnailUrl || data.url,
+      };
     } catch (err) {
       console.error('Image upload failed:', err);
       const msg =
@@ -69,12 +77,12 @@ const useImageUpload = () => {
   };
 
   /**
-   * Upload multiple images to ImageKit via backend
+   * Upload multiple images to Cloudflare R2 via backend
    * @param {File[] | FileList} files - List of image files
-   * @param {string} folder - Destination folder on ImageKit (default: '/products')
-   * @returns {Promise<Array<{ url: string, fileId: string, name: string, thumbnailUrl: string }>>}
+   * @param {string} folder - Destination folder (default: 'products')
+   * @returns {Promise<Array<{ url: string, key: string, fileId: string, name: string, variants: Object, thumbnailUrl: string }>>}
    */
-  const uploadMultipleImages = async (files, folder = '/products') => {
+  const uploadMultipleImages = async (files, folder = 'products') => {
     const fileList = Array.from(files || []);
     if (fileList.length === 0) return [];
 
@@ -92,7 +100,7 @@ const useImageUpload = () => {
     validFiles.forEach((file) => {
       formData.append('images', file);
     });
-    formData.append('folder', folder);
+    formData.append('folder', folder.replace(/^\//, ''));
 
     try {
       const response = await api.post('/upload/multiple', formData, {
@@ -110,10 +118,20 @@ const useImageUpload = () => {
       });
 
       setProgress(100);
+      const rawList = response.data?.data || [];
+      const normalizedList = rawList.map((data) => ({
+        url: data.url,
+        key: data.key || data.fileId,
+        fileId: data.key || data.fileId,
+        name: data.name,
+        variants: data.variants || {},
+        thumbnailUrl: data.variants?.thumbnail || data.thumbnailUrl || data.url,
+      }));
+
       toast.success(
-        `${response.data?.data?.length || validFiles.length} image(s) uploaded successfully!`
+        `${normalizedList.length || validFiles.length} image(s) uploaded successfully!`
       );
-      return response.data?.data || [];
+      return normalizedList;
     } catch (err) {
       console.error('Multiple image upload failed:', err);
       const msg =
@@ -128,18 +146,19 @@ const useImageUpload = () => {
   };
 
   /**
-   * Delete an image from ImageKit
-   * @param {string} fileId - The ImageKit fileId
+   * Delete an image from Cloudflare R2 / storage
+   * @param {string} keyOrFileId - The R2 key or legacy fileId
    */
-  const deleteImage = async (fileId) => {
-    if (!fileId) return false;
+  const deleteImage = async (keyOrFileId) => {
+    if (!keyOrFileId) return false;
     try {
-      await api.delete(`/upload/${fileId}`);
-      toast.success('Image removed from ImageKit');
+      // Support path-like keys with encodeURIComponent
+      await api.delete(`/upload/${encodeURIComponent(keyOrFileId)}`);
+      toast.success('Image removed from storage');
       return true;
     } catch (err) {
       console.error('Failed to delete image:', err);
-      toast.error('Failed to delete image from storage.');
+      toast.error(err.response?.data?.message || 'Failed to delete image from storage.');
       return false;
     }
   };
@@ -147,7 +166,7 @@ const useImageUpload = () => {
   /**
    * Helper event handler to attach directly to <input type="file" multiple />
    */
-  const handleFileChange = async (e, folder = '/products') => {
+  const handleFileChange = async (e, folder = 'products') => {
     const files = e.target.files;
     if (!files || files.length === 0) return [];
 
