@@ -320,7 +320,7 @@ export default function ContactPage() {
                   <FaTruck className="text-amber-600 text-sm mt-0.5 shrink-0" />
                   <div>
                     <strong className="text-gray-800 block">Nationwide Delivery</strong>
-                    <span>Cash on Delivery available all across Bangladesh (Dhaka ৳60 / Outside Dhaka ৳130)</span>
+                    <span>Cash on Delivery available all across Bangladesh (Dhaka ৳70 / Outside Dhaka ৳130)</span>
                   </div>
                 </div>
 

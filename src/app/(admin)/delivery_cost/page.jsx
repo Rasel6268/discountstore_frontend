@@ -6,7 +6,7 @@ import { FaBangladeshiTakaSign } from "react-icons/fa6";
 import toast from "react-hot-toast";
 
 const DeliverySettingsPage = () => {
-  const [dhakaRate, setDhakaRate] = useState(60);
+  const [dhakaRate, setDhakaRate] = useState(70);
   const [outsideDhakaRate, setOutsideDhakaRate] = useState(130);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(1000);
 

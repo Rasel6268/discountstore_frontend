@@ -144,6 +144,8 @@ const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
+    checkUser,
+    refetchUser: checkUser,
     forgotPassword,
     resetPassword,
   };

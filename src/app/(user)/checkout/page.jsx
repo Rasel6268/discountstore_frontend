@@ -90,7 +90,7 @@ const CheckoutPage = () => {
     return sum + item.price * item.quantity;
   }, 0);
 
-  const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
+  const shippingCost = formData.shippingArea === "dhaka" ? 70 : 130;
   const tax = (subtotal - couponDiscount) * 0;
   const total = subtotal + shippingCost + tax - couponDiscount;
 
@@ -98,7 +98,7 @@ const CheckoutPage = () => {
     dhaka: {
       id: "dhaka",
       name: "Inside Dhaka",
-      price: 60,
+      price: 70,
       days: "1-2 business days",
       description: "Delivery within Dhaka city",
       icon: FaLocationDot,

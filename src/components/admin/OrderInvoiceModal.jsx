@@ -587,7 +587,7 @@ const OrderInvoiceModal = ({ order, isOpen, onClose }) => {
                   <p style={{ margin: "4px 0 0 0", fontSize: "11px", fontWeight: 700, color: "#b45309" }}>
                     Zone:{" "}
                     {order.shippingArea === "dhaka"
-                      ? "Inside Dhaka Metropolitan (৳60 Regular)"
+                      ? "Inside Dhaka Metropolitan (৳70 Regular)"
                       : "Outside Dhaka Nationwide (৳130 Courier)"}
                   </p>
                 </div>

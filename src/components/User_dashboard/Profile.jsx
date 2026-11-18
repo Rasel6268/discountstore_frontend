@@ -14,7 +14,7 @@ import {
 } from "react-icons/fa";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, checkUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -76,9 +76,7 @@ const Profile = () => {
         return "";
 
       case "address.postalCode":
-        if (!value.trim()) return "Postal code is required";
-        const zipRegex = /^\d{5}(-\d{4})?$/;
-        if (!zipRegex.test(value)) return "Invalid ZIP code format";
+        // Accept any number, postal code, or zip code without strict format restriction
         return "";
 
       default:
@@ -172,8 +170,11 @@ const Profile = () => {
       
       try {
         const res = await api.put('/auth/edit_profile', formData);
-         if (res.data.success) {
-          toast.success(res.data.message);
+        if (res.data.success) {
+          toast.success(res.data.message || "Profile updated successfully");
+          if (checkUser) {
+            await checkUser();
+          }
         } else {
           toast.error("Failed to update profile. Please try again.");
         }
@@ -502,7 +503,7 @@ const Profile = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Postal Code <span className="text-red-500">*</span>
+                Postal / ZIP Code
               </label>
               <input
                 type="text"
@@ -513,8 +514,8 @@ const Profile = () => {
                 disabled={!isEditing}
                 placeholder={
                   !isEditing && isEmpty(formData.address.postalCode)
-                    ? "Please fill this field"
-                    : "Enter your postal code"
+                    ? "Not provided"
+                    : "Enter postal or zip code (any number)"
                 }
                 className={getInputClasses(
                   "address.postalCode",

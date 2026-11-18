@@ -146,7 +146,7 @@ const TrackOrderContent = () => {
       name: order.shippingAddress?.fullName || order.shippingAddress?.name || "",
       phone: order.shippingAddress?.phone || "",
       shippingArea:
-        order.shippingArea || (order.shippingCost === 60 ? "dhaka" : "outside_dhaka"),
+        order.shippingArea || (order.shippingCost === 70 || order.shippingCost === 60 ? "dhaka" : "outside_dhaka"),
       addressLine1: order.shippingAddress?.addressLine1 || "",
       addressLine2: order.shippingAddress?.addressLine2 || "",
       city: order.shippingAddress?.city || "",
@@ -886,7 +886,7 @@ const TrackOrderContent = () => {
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
                   <p className="font-semibold">ℹ️ Editing before processing:</p>
                   <p className="mt-0.5">
-                    You can change your delivery recipient, address, delivery area, and notes. Delivery fee adjusts automatically (Dhaka: ৳60 / Outside Dhaka: ৳130).
+                    You can change your delivery recipient, address, delivery area, and notes. Delivery fee adjusts automatically (Dhaka: ৳70 / Outside Dhaka: ৳130).
                   </p>
                 </div>
 
@@ -937,7 +937,7 @@ const TrackOrderContent = () => {
                         onChange={() => setChangeForm({ ...changeForm, shippingArea: "dhaka" })}
                         className="text-amber-600 focus:ring-amber-500"
                       />
-                      <span>Inside Dhaka (৳60)</span>
+                      <span>Inside Dhaka (৳70)</span>
                     </label>
                     <label
                       className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs cursor-pointer ${

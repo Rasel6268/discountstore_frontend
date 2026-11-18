@@ -102,7 +102,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-lg font-bold text-gray-800 mb-2">Nationwide Fast Delivery</h3>
             <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
-              Reliable delivery across all 64 districts (Inside Dhaka ৳60 / Outside Dhaka ৳130) with real-time parcel tracking.
+              Reliable delivery across all 64 districts (Inside Dhaka ৳70 / Outside Dhaka ৳130) with real-time parcel tracking.
             </p>
           </div>
 

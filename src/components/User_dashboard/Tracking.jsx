@@ -211,7 +211,7 @@ const Tracking = () => {
       phone: trackedOrder.shippingAddress?.phone || user?.phone || "",
       shippingArea:
         trackedOrder.shippingArea ||
-        (trackedOrder.shippingCost === 60 ? "dhaka" : "outside_dhaka"),
+        (trackedOrder.shippingCost === 70 || trackedOrder.shippingCost === 60 ? "dhaka" : "outside_dhaka"),
       addressLine1: trackedOrder.shippingAddress?.addressLine1 || "",
       addressLine2: trackedOrder.shippingAddress?.addressLine2 || "",
       city: trackedOrder.shippingAddress?.city || "",
@@ -449,7 +449,7 @@ const Tracking = () => {
               <div className="py-8">
                 <div className="relative">
                   {/* Connecting Line */}
-                  <div className="absolute top-1/2 left-6 right-6 -translate-y-1/2 h-1 bg-gray-200 -z-0 hidden md:block">
+                  <div className="absolute top-1/2 left-6 right-6 -translate-y-1/2 h-1 bg-gray-200 z-0 hidden md:block">
                     <div
                       className="h-full bg-amber-500 transition-all duration-700 ease-out"
                       style={{
@@ -741,7 +741,7 @@ const Tracking = () => {
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
                 <p className="font-semibold">ℹ️ Editing before processing:</p>
                 <p className="mt-0.5">
-                  You can change your delivery recipient, address, delivery area, and notes. Delivery fee adjusts automatically (Dhaka: ৳60 / Outside Dhaka: ৳130).
+                  You can change your delivery recipient, address, delivery area, and notes. Delivery fee adjusts automatically (Dhaka: ৳70 / Outside Dhaka: ৳130).
                 </p>
               </div>
 
@@ -792,7 +792,7 @@ const Tracking = () => {
                       onChange={() => setChangeForm({ ...changeForm, shippingArea: "dhaka" })}
                       className="text-amber-600 focus:ring-amber-500"
                     />
-                    <span>Inside Dhaka (৳60)</span>
+                    <span>Inside Dhaka (৳70)</span>
                   </label>
                   <label
                     className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs cursor-pointer ${

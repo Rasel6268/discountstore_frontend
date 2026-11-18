@@ -260,7 +260,7 @@ const MyOrder = () => {
         user?.phone ||
         "",
       shippingArea:
-        order.shippingArea || (order.shippingCost === 60 ? "dhaka" : "outside_dhaka"),
+        order.shippingArea || (order.shippingCost === 70 || order.shippingCost === 60 ? "dhaka" : "outside_dhaka"),
       addressLine1: order.shippingAddress?.addressLine1 || "",
       addressLine2: order.shippingAddress?.addressLine2 || "",
       city: order.shippingAddress?.city || "",
@@ -1400,7 +1400,7 @@ const MyOrder = () => {
                         onChange={() => setChangeForm({ ...changeForm, shippingArea: "dhaka" })}
                         className="text-amber-600 focus:ring-amber-500"
                       />
-                      <span>Inside Dhaka (৳60)</span>
+                      <span>Inside Dhaka (৳70)</span>
                     </label>
                     <label
                       className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs cursor-pointer ${
@@ -1426,8 +1426,8 @@ const MyOrder = () => {
 
                 {/* Live Cost Estimate Preview */}
                 {(() => {
-                  const originalCost = orderToChange.shippingCost || 60;
-                  const newCost = changeForm.shippingArea === "dhaka" ? 60 : 130;
+                  const originalCost = orderToChange.shippingCost || 70;
+                  const newCost = changeForm.shippingArea === "dhaka" ? 70 : 130;
                   const diff = newCost - originalCost;
                   const estimatedTotal = (orderToChange.total || 0) + diff;
 
