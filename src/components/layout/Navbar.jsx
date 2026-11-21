@@ -202,7 +202,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <img
-            src="https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781946003/ChatGPT_Image_Jun_20_2026_02_38_14_PM_sqijgu.png"
+            src="https://cdn.discountstorebd.com/Orange%20Boot%20%E2%80%9CD%E2%80%9D%20Discount%20Store%20Logo%20(1).png"
             alt="Discount Store"
             className="h-15 w-auto object-contain"
             style={{ maxHeight: "60px" }}
@@ -249,11 +249,6 @@ const Navbar = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3 md:gap-4">
-          {/* Search Icon */}
-          <button className="hidden md:flex p-2 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300">
-            <FaSearch className="text-lg" />
-          </button>
-
           {/* Cart Icon - Mobile (visible on all screens) */}
           <Link
             href="/cart"
@@ -291,7 +286,7 @@ const Navbar = () => {
               >
                 <img
                   src={
-                    "https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781938843/istockphoto-588258370-612x612_nebeq7.png"
+                    "https://cdn.discountstorebd.com/Orange%20Boot%20%E2%80%9CD%E2%80%9D%20Discount%20Store%20Logo%20(1).png"
                   }
                   alt="User Avatar"
                   className="w-full h-full object-cover"
@@ -303,7 +298,7 @@ const Navbar = () => {
                   <div className="bg-linear-to-r from-amber-50 to-white dark:from-amber-900/50 dark:to-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
                     <img
                       src={
-                        "https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781938843/istockphoto-588258370-612x612_nebeq7.png"
+                        "https://cdn.discountstorebd.com/Orange%20Boot%20%E2%80%9CD%E2%80%9D%20Discount%20Store%20Logo%20(1).png"
                       }
                       alt="User Avatar"
                       className="w-12 h-12 rounded-full object-cover border-2 border-amber-500 shadow-sm"
@@ -393,14 +388,6 @@ const Navbar = () => {
         <div className="lg:hidden bg-white dark:bg-gray-800 shadow-2xl border-t border-gray-200 dark:border-gray-700 absolute w-full z-40 left-0 top-full animate-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-2 p-4 max-h-[80vh] overflow-y-auto">
             {/* Search Bar */}
-            <div className="relative mb-2">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-500"
-              />
-              <FaSearch className="absolute right-3 top-3 text-gray-400" />
-            </div>
             {/* Theme Toggle in Mobile Menu */}
             {themeMounted && (
               <button
