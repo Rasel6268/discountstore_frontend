@@ -202,7 +202,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <img
-            src="https://cdn.discountstorebd.com/Orange%20Boot%20%E2%80%9CD%E2%80%9D%20Discount%20Store%20Logo%20(1).png"
+            src="https://cdn.discountstorebd.com/Discount%20Store%20BD%20Boot%20Logo.png"
             alt="Discount Store"
             className="h-15 w-auto object-contain"
             style={{ maxHeight: "60px" }}

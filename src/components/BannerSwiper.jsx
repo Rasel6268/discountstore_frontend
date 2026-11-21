@@ -28,7 +28,7 @@ const BannerSlider = () => {
       buttonText: "Shop Footwear",
       link: "/shop",
       image: `${cdnBase}/banners/banner_collection.webp`,
-      fallbackImage: "https://ik.imagekit.io/efgitz1yf/banner_collection.jpg",
+      fallbackImage: "https://cdn.discountstorebd.com/banner_1.jpg",
       badge: "Full-Grain Leather",
     },
     {
@@ -42,7 +42,7 @@ const BannerSlider = () => {
       buttonText: "Explore Handbags",
       link: "/shop",
       image: `${cdnBase}/banners/banner_handbag.webp`,
-      fallbackImage: "https://ik.imagekit.io/efgitz1yf/banner_handbag.jpg",
+      fallbackImage: "https://cdn.discountstorebd.com/Banner_2.jpg",
       badge: "Exclusive Design",
     },
     {
@@ -56,7 +56,7 @@ const BannerSlider = () => {
       buttonText: "Grab Deal",
       link: "/shop",
       image: `${cdnBase}/banners/banner_shoes.webp`,
-      fallbackImage: "https://ik.imagekit.io/efgitz1yf/banner_shoes.jpg",
+      fallbackImage: "https://cdn.discountstorebd.com/banner_3.jpg",
       badge: "Limited Stock",
     },
   ];
