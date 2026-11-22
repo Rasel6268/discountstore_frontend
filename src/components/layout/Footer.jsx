@@ -59,8 +59,8 @@ const Footer = () => {
           <div>
             <Link href="/" className="flex items-center gap-2">
               <img
-                src="https://res.cloudinary.com/dlaeg7qjm/image/upload/q_auto/f_auto/v1781946003/ChatGPT_Image_Jun_20_2026_02_38_14_PM_sqijgu.png"
-                alt="Discount Store"
+                src="https://cdn.discountstorebd.com/Orange%20Boot%20%E2%80%9CD%E2%80%9D%20Discount%20Store%20Logo%20(1).png"
+                alt="Discount Store BD"
                 className="h-15 w-auto object-contain"
                 style={{ maxHeight: "60px" }}
               />
