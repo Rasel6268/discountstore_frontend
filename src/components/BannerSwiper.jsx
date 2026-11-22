@@ -14,7 +14,7 @@ import "swiper/css/effect-fade";
 
 const BannerSlider = () => {
   const router = useRouter();
-  const cdnBase = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://cdn.discountstorebd.com").replace(/\/$/, "");
+  const cdnBase = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL).replace(/\/$/, "");
 
   const banners = [
     {
